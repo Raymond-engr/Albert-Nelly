@@ -1,0 +1,11 @@
+.sec { min-height: 100svh; max-width: 1280px; margin: 0 auto; padding: 96px 5vw; display: flex; flex-direction: column; justify-content: center; }
+.sec h2 { font-size: clamp(28px, 4vw, 40px); margin-bottom: 14px; }
+.chap { min-height: 56vh; display: flex; align-items: center; }
+.card { max-width: 440px; padding: 22px; border: 1.5px solid color-mix(in srgb, var(--g) 30%, transparent); border-radius: 22px; background: color-mix(in srgb, var(--card) 88%, transparent); backdrop-filter: blur(10px); transition: border-color 0.2s, transform 0.2s ease-out; }
+.card h3 { font-size: 22px; margin-bottom: 6px; }
+.lit, .chap:hover .card { border-color: var(--g); transform: translateY(-4px); }
+.chip { display: inline-block; margin-bottom: 8px; padding: 2px 12px; border-radius: 99px; background: var(--mint); font-size: 13px; font-weight: 600; }
+.note { font-size: 14px; opacity: 0.8; }
+.price { font-weight: 600; color: var(--gd); }
+@media (max-width: 800px) { .sec { padding-top: 84px; justify-content: flex-end; } .chap { min-height: 48vh; align-items: flex-end; } }
+@media (prefers-reduced-motion: reduce) { .card { transition: none; transform: none !important; } }

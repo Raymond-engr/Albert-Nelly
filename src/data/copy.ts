@@ -33,6 +33,8 @@ export const copy = {
     howBody: "You get introductions to our clients and shared promotion. We need your portfolio, your rates and your contact details.",
     steps: ["Register", "Chat with us on WhatsApp", "Get approved"],
     cta: "Partner with us",
+    tileNote: "Placeholder: what they do with Albert Nelly.",
+    tileLink: "Visit site",
   },
   join: { title: "Tell us what you’re building.", lead: "A short form, then a WhatsApp chat with the team.", cta: "Let’s talk" },
 } as const;

@@ -1,13 +1,34 @@
 import { mainSlots } from "@/components/showroom/slots";
 import type { Slots } from "@/types/slots";
+import About from "./About";
+import Hero from "./Hero";
+import Join from "./Join";
+import Nav from "./Nav";
+import Partners from "./Partners";
+import Referral from "./Referral";
+import RegistrationPanel from "./RegistrationPanel";
+import Schools from "./Schools";
+import Services from "./Services";
+import Stage from "./Stage";
+import WhatsAppFab from "./WhatsAppFab";
+import Work from "./Work";
 
 /**
- * Variant "two". Every slot starts as main's version. Replace a slot by creating
- * a file in this folder (for example ./Hero.tsx) and importing it below.
- * See docs/CONVERT_PROTOTYPE.md.
+ * Variant "two": the scroll-driven Three.js prototype. Every slot not listed here (Footer) is main's version.
+ * See docs/variants/two.md for what each part looks like and needs.
  */
 export const twoSlots: Slots = {
   ...mainSlots,
-  // Hero,
-  // Stage,
+  Nav,
+  Stage,
+  Hero,
+  About,
+  Services,
+  Schools,
+  Work,
+  Referral,
+  Partners,
+  Join,
+  WhatsAppFab,
+  RegistrationPanel,
 };

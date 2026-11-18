@@ -1,0 +1,25 @@
+.scrim { position: fixed; inset: 0; z-index: 50; background: rgba(6, 40, 30, 0.5); opacity: 0; pointer-events: none; transition: opacity 0.25s ease-out; }
+.scrim.on { opacity: 1; pointer-events: auto; }
+.panel { position: fixed; top: 0; right: 0; bottom: 0; z-index: 51; width: min(440px, 100%); padding: calc(env(safe-area-inset-top, 0px) + 56px) 24px 28px; overflow: auto; background: var(--bg); color: var(--ink); transform: translateX(100%); transition: transform 0.4s ease-out; }
+.panel.on { transform: none; }
+.panel h2 { font-size: clamp(28px, 4vw, 40px); margin-bottom: 14px; }
+.panel h2:focus { outline: none; }
+.x { position: absolute; top: calc(env(safe-area-inset-top, 0px) + 8px); right: 12px; width: 44px; height: 44px; border: 0; background: none; color: var(--ink); font-size: 30px; cursor: pointer; }
+.chip { display: inline-block; margin-bottom: 8px; padding: 2px 12px; border-radius: 99px; background: var(--mint); font-size: 13px; font-weight: 600; }
+.choices { display: grid; gap: 12px; margin-top: 14px; }
+.ch { min-height: 68px; padding: 14px 18px; border: 1.5px solid var(--line); border-radius: 16px; background: var(--bg); color: var(--ink); font: 600 16px var(--font-sans); text-align: left; cursor: pointer; transition: border-color 0.2s; }
+.ch:hover { border-color: var(--g); background: var(--mint); }
+.panel label { display: block; margin-top: 14px; font-size: 14px; font-weight: 500; }
+.panel input, .panel select { width: 100%; min-height: 48px; margin-top: 4px; padding: 0 14px; border: 1.5px solid var(--line); border-radius: 12px; background: var(--bg); color: var(--ink); font: inherit; }
+.panel input[aria-invalid="true"] { border-color: var(--er); }
+.row { display: grid; grid-template-columns: 96px 1fr; gap: 8px; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.consent { margin-top: 18px; }
+.panel input[type="checkbox"] { width: 20px; min-height: 20px; margin: 0 8px 0 0; vertical-align: middle; }
+.hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+.err { display: block; color: var(--er); font-size: 13px; }
+.sm { font-size: 14px; opacity: 0.8; }
+.bubble { margin: 12px 0; padding: 14px 16px; border-radius: 18px 18px 18px 4px; background: var(--mint); overflow-wrap: anywhere; }
+.ld { display: block; height: 4px; margin-top: 10px; border-radius: 4px; background: linear-gradient(90deg, transparent, var(--g), transparent) 0 0 / 50% 100% no-repeat; animation: ld 1s linear infinite; }
+@keyframes ld { to { background-position: 200% 0; } }
+@media (prefers-reduced-motion: reduce) { .scrim, .panel { transition: none; } .ld { animation: none; } }

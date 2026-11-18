@@ -1,0 +1,15 @@
+.sec { min-height: 100svh; max-width: 1280px; margin: 0 auto; padding: 96px 5vw; display: flex; flex-direction: column; justify-content: center; }
+.sec h2 { font-size: clamp(28px, 4vw, 40px); margin-bottom: 14px; }
+.tiles { display: flex; flex-wrap: wrap; gap: 12px; }
+.tile { height: 64px; min-width: 130px; padding: 0 18px; border: 1.5px solid var(--line); border-radius: 14px; background: color-mix(in srgb, var(--card) 88%, transparent); color: var(--ink); font: 600 16px var(--font-sans); filter: grayscale(1); cursor: pointer; }
+.tile:hover, .tile:focus-visible, .tile[aria-expanded="true"] { filter: none; border-color: var(--g); }
+.card { padding: 22px; border: 1.5px solid color-mix(in srgb, var(--g) 30%, transparent); border-radius: 22px; background: color-mix(in srgb, var(--card) 88%, transparent); backdrop-filter: blur(10px); }
+.card h3 { font-size: 22px; margin-bottom: 6px; }
+.info { margin: 14px 0; max-width: 420px; }
+.how { max-width: 500px; margin-top: 14px; }
+.note { font-size: 14px; opacity: 0.8; }
+.list { list-style: none; padding: 0; margin: 10px 0; }
+.list li::before { content: "✓ "; color: var(--gd); font-weight: 700; }
+.bl { background: linear-gradient(var(--g), var(--g)) 0 100% / 0 3px no-repeat; transition: background-size 0.25s ease-out; }
+.bl:hover { background-size: 100% 3px; }
+@media (max-width: 800px) { .sec { padding-top: 84px; justify-content: flex-end; } }
