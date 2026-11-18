@@ -1,0 +1,85 @@
+@import "tailwindcss";
+
+/* Brand tokens. Everything in the Showroom reads these variables, so a variant can
+   re-skin itself by overriding them on its own wrapper element. */
+:root {
+  --bg: #ffffff;
+  --ink: #06281e;
+  --g: #12b76a;
+  --gd: #0a7d4a;
+  --mint: #e9f8f0;
+  --cloud: #f4f7f5;
+  --sun: #f7b733;
+  --coral: #ff6f59;
+  --line: #cfe0d6;
+  --card: #ffffff;
+  --er: #b42318;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #06281e; --ink: #e9f8f0; --gd: #4fd69c; --mint: #0c3a2b; --cloud: #0a3326;
+    --line: #1f5c45; --card: #0a3326; --er: #ff8a7a; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #06281e; --ink: #e9f8f0; --gd: #4fd69c; --mint: #0c3a2b; --cloud: #0a3326;
+  --line: #1f5c45; --card: #0a3326; --er: #ff8a7a; color-scheme: dark;
+}
+
+@theme inline {
+  --color-paper: var(--bg);
+  --color-ink: var(--ink);
+  --color-brand: var(--g);
+  --color-deep: var(--gd);
+  --color-mint: var(--mint);
+  --color-cloud: var(--cloud);
+  --color-sun: var(--sun);
+  --color-coral: var(--coral);
+  --color-line: var(--line);
+  --color-card: var(--card);
+  --color-danger: var(--er);
+  --font-sans: var(--font-inter), Arial, sans-serif;
+  --font-display: var(--font-sora), Arial, sans-serif;
+}
+
+@layer base {
+  html { scroll-behavior: smooth; scroll-padding-top: calc(76px + env(safe-area-inset-top, 0px)); }
+  body {
+    font-family: var(--font-sans);
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.5;
+    overflow-x: hidden;
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  /* Fills the notch area so scrolling content never shows behind the status bar. */
+  body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); background: var(--bg); z-index: 19; }
+  h1, h2, h3 { font-family: var(--font-display); font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; }
+  h1 { font-size: clamp(42px, 7.4vw, 80px); }
+  h2 { font-size: clamp(30px, 4.4vw, 48px); margin-bottom: 1rem; }
+  h3 { font-size: 20px; font-weight: 600; margin-bottom: 0.4rem; }
+  p { max-width: 54ch; margin-bottom: 0.75rem; }
+  a { color: var(--gd); }
+  :focus-visible { outline: 3px solid var(--g); outline-offset: 3px; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+}
+
+/* Shared building blocks. Variants may reuse or ignore them. */
+@layer components {
+  .wrap { width: min(1200px, calc(100% - 2 * clamp(20px, 5vw, 48px))); margin-inline: auto; }
+  .col { max-width: 540px; }
+  .section { padding-block: clamp(72px, 11vw, 128px); }
+  /* The painter's-canvas frame: a mat and a hairline around every card. */
+  .card { position: relative; background: var(--card); border-radius: 20px; padding: 24px; box-shadow: 0 0 0 6px var(--bg), 0 0 0 7px var(--line); }
+  .chip { display: inline-block; font-size: 13px; font-weight: 600; background: var(--mint); color: var(--gd); border-radius: 999px; padding: 3px 12px; margin-bottom: 10px; }
+  .note { font-size: 14px; opacity: 0.75; }
+  .price { font-weight: 600; color: var(--gd); margin: 10px 0 14px; }
+  .ck { list-style: none; padding: 0; margin: 14px 0; }
+  .ck li { display: flex; gap: 12px; margin-bottom: 8px; font-size: 15px; }
+  .ck li::before { content: ""; flex: none; width: 6px; height: 11px; margin: 4px 6px 0 2px; border: solid var(--gd); border-width: 0 2.5px 2.5px 0; transform: rotate(45deg); }
+}
+
+/* Blueprint view: the Nav toggle adds .bp to <body>. */
+body.bp main * { outline: 1px dashed rgba(18, 183, 106, 0.7); outline-offset: -1px; }
+body.bp main .card { box-shadow: none; }

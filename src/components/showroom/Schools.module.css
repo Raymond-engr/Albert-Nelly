@@ -1,0 +1,15 @@
+.grid { display: grid; gap: 30px; grid-template-columns: repeat(3, 1fr); margin: 40px 0; }
+.pkg { display: flex; flex-direction: column; }
+.pkg > :last-child { margin-top: auto; }
+.featured { background: var(--mint); box-shadow: 0 0 0 6px var(--bg), 0 0 0 8px var(--g); }
+.more summary, .costs summary { cursor: pointer; font-weight: 600; color: var(--gd); min-height: 44px; display: flex; align-items: center; }
+.costs summary { font-family: var(--font-display); font-size: 20px; color: var(--ink); }
+.tip { border-bottom: 1.5px dotted var(--gd); position: relative; cursor: help; }
+.tip:hover::after, .tip:focus::after { content: attr(data-tip); position: absolute; left: 0; bottom: 130%; width: 230px; background: var(--ink); color: var(--bg); font-size: 13px; padding: 8px 12px; border-radius: 10px; z-index: 5; }
+.table { width: 100%; border-collapse: collapse; }
+.table td { padding: 12px 0; border-bottom: 1px solid var(--line); font-size: 15px; }
+.table td:last-child { text-align: right; font-weight: 600; }
+@media (max-width: 820px) {
+  .grid { grid-auto-flow: column; grid-template-columns: none; grid-auto-columns: 84%; overflow-x: auto; scroll-snap-type: x mandatory; padding: 8px 8px 14px; }
+  .pkg { scroll-snap-align: center; }
+}

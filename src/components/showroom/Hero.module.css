@@ -1,0 +1,6 @@
+.hero { min-height: calc(100svh - 64px); display: flex; align-items: center; }
+.in > * { animation: up 0.9s both; }
+.in .lead { animation-delay: 0.2s; margin-top: 20px; font-size: 18px; }
+.in .acts { animation-delay: 0.4s; display: flex; gap: 12px; flex-wrap: wrap; margin-top: 28px; }
+@keyframes up { from { opacity: 0; transform: translateY(14px); } }
+@media (prefers-reduced-motion: reduce) { .in > * { animation: none; } }

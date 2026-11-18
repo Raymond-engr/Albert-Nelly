@@ -1,0 +1,23 @@
+.scrim { position: fixed; inset: 0; background: rgba(6, 40, 30, 0.45); opacity: 0; visibility: hidden; transition: 0.3s; z-index: 40; }
+.scrim.on { opacity: 1; visibility: visible; }
+/* Slide-over on desktop, full-screen sheet on phones. */
+.panel { position: fixed; z-index: 50; top: 0; right: 0; height: 100%; width: min(480px, 100%); background: var(--bg); color: var(--ink); overflow: auto;
+  padding: calc(24px + env(safe-area-inset-top, 0px)) 28px calc(28px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(100%); visibility: hidden; transition: transform 0.45s cubic-bezier(0.2, 0.7, 0.2, 1), visibility 0s 0.45s; }
+.panel.on { transform: none; visibility: visible; transition-delay: 0s; }
+@media (max-width: 700px) { .panel { transform: translateY(100%); } }
+.x { position: absolute; top: calc(14px + env(safe-area-inset-top, 0px)); right: 16px; width: 44px; height: 44px; border-radius: 50%; border: 0; background: var(--cloud); color: var(--ink); font-size: 22px; cursor: pointer; }
+.panel h2 { font-size: 30px; margin: 36px 40px 14px 0; outline: none; }
+.opt { display: block; width: 100%; text-align: left; min-height: 64px; padding: 16px 20px; margin-top: 12px; border: 1.5px solid var(--line); border-radius: 16px; background: var(--card); font-family: var(--font-display); font-weight: 600; font-size: 17px; color: var(--ink); cursor: pointer; }
+.opt:hover { border-color: var(--g); background: var(--mint); }
+.panel label { display: block; font-weight: 600; font-size: 14px; margin: 16px 0 6px; }
+.panel input:not([type="checkbox"]), .panel select { width: 100%; min-height: 48px; border: 1.5px solid var(--line); border-radius: 12px; padding: 0 14px; font: inherit; background: var(--bg); color: var(--ink); }
+.panel input[aria-invalid="true"] { border-color: var(--er); }
+.row { display: flex; gap: 10px; }
+.row select:first-child { max-width: 130px; }
+.err { color: var(--er); font-size: 14px; margin: 4px 0 0; }
+.hint { font-size: 13px; opacity: 0.75; margin: 6px 0 0; }
+.consent { display: flex !important; gap: 10px; align-items: flex-start; font-weight: 400 !important; margin-top: 20px !important; }
+.consent input { width: 22px !important; min-height: 22px !important; margin-top: 2px; accent-color: #12b76a; }
+.hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+.lnk { display: block; background: none; border: 0; color: var(--gd); font: 600 15px var(--font-sans); cursor: pointer; min-height: 44px; margin-top: 6px; }
