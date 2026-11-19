@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
+import { reportFps } from "@/lib/motion";
 import { useRegistration } from "@/providers/RegistrationProvider";
 import type { SceneId } from "@/types/scene";
 import { buildWorld, G, MINT, type Mode } from "./world";
@@ -75,6 +76,10 @@ export default function StageGL({ scene, dim, mode, onFail }: Props) {
 
     let applied: Mode | null = null, ts = 0, px = 0, py = 0, done = false, raf = 0;
     const pl = [0, 0, 0, 0, 0, 0, 0];
+    // Mode changes ease in: idle motion fades, scroll smoothing relaxes, the extra orbit shapes shrink away.
+    const startStill = live.current.mode === "still";
+    let idle = startStill ? 0 : 1, sm = startStill ? 1 : 0.08, fa = 0, fn = 0, warm = 2;
+    const orbS = w.orb.map(() => 1);
     const start = performance.now() + 900; // the stroke starts after the text has appeared
 
     const resize = () => {
@@ -88,7 +93,6 @@ export default function StageGL({ scene, dim, mode, onFail }: Props) {
     const apply = (m: Mode) => {
       applied = m;
       rd.setPixelRatio(m === "full" ? Math.min(devicePixelRatio, 2) : 1);
-      w.orb.forEach((o, i) => (o.visible = m === "full" || i < 4));
       resize();
       if (m === "still") w.paint(1);
     };
@@ -113,10 +117,17 @@ export default function StageGL({ scene, dim, mode, onFail }: Props) {
     const frame = (now: number) => {
       raf = requestAnimationFrame(frame);
       const L = live.current;
-      if (document.hidden || L.dim) return; // Selected Work: the render loop pauses
+      if (document.hidden || L.dim) {
+        fa = 0; // paused: do not count it as a slow stretch
+        fn = 0;
+        return; // Selected Work: the render loop pauses
+      }
       if (L.mode !== applied) apply(L.mode);
-      const still = L.mode === "still", fl = still ? 0 : 1, time = now / 1000;
-      ts += (timeline() - ts) * (still ? 1 : 0.08);
+      const still = L.mode === "still", time = now / 1000;
+      idle += ((still ? 0 : 1) - idle) * 0.05;
+      sm += ((still ? 1 : 0.08) - sm) * 0.1;
+      const fl = idle;
+      ts += (timeline() - ts) * sm;
       if (!done) {
         const u = still ? 1 : Math.min(1, Math.max(0, (now - start) / 3000));
         w.paint(1 - Math.pow(1 - u, 3));
@@ -133,7 +144,10 @@ export default function StageGL({ scene, dim, mode, onFail }: Props) {
       });
       w.gs[1].children.forEach((c, i) => c.scale.setScalar(Math.max(0.001, ss(w.gs[1].userData.w * 1.6 - i * 0.15))));
       w.gs[0].position.y = Math.sin(time * 0.8) * 0.08 * fl;
-      w.orb.forEach((o) => {
+      w.orb.forEach((o, i) => {
+        orbS[i] += ((L.mode === "full" || i < 4 ? 1 : 0) - orbS[i]) * 0.08;
+        o.visible = orbS[i] > 0.02;
+        o.scale.setScalar(Math.max(0.001, orbS[i]));
         const d = o.userData, a = time * d.s * fl + d.p;
         o.position.set(Math.cos(a) * d.r, d.y + Math.sin(a * 1.3) * 0.2 * fl, Math.sin(a) * d.r * 0.5);
         o.rotation.set(a, a * 0.7, 0);
@@ -156,6 +170,15 @@ export default function StageGL({ scene, dim, mode, onFail }: Props) {
       cam.position.set(c[0] + px * 0.3, c[1] - py * 0.2, c[2]);
       cam.lookAt(0, 0, 0);
       rd.render(sc, cam);
+      // Frame rate: a slow device steps down by itself (src/lib/motion.ts). The first two windows are warm-up.
+      fn++;
+      if (!fa) fa = now;
+      else if (now - fa >= 2000) {
+        if (warm > 0) warm--;
+        else reportFps((fn * 1000) / (now - fa));
+        fa = now;
+        fn = 0;
+      }
     };
     raf = requestAnimationFrame(frame);
 

@@ -8,7 +8,7 @@ Source prototype: single-file HTML (Claude, Three.js r128 from a CDN, `albert-ne
   - Fully procedural: no model files, so nothing downloads except three.js. The stroke is drawn live into a canvas texture.
   - Scrubbed to scroll with light smoothing. The timeline is read from the section ids in `SLOTS.md`; a missing id is skipped.
   - Honours `dim`: fades to 12% and pauses the render loop (Selected Work). Reads `scene` to pulse the object of the service card being hovered or mid-screen.
-  - Three modes: Full, Light (pixel ratio 1, half the orbit shapes) and Still (no idle motion or smoothing, stroke already painted). Picked automatically (reduced motion gives Still; data saver or under 4 GB memory gives Light).
+  - Three modes: Full, Light (pixel ratio 1, half the orbit shapes) and Still (no idle motion or smoothing, stroke already painted). The mode comes from `useMotionMode()`: it adapts at runtime to the connection, memory, reduced motion and the frame rate this Stage reports, and `NEXT_PUBLIC_MOTION_MODE` pins it in development. Changes are smooth: idle motion fades, scroll smoothing relaxes and the extra orbit shapes shrink away.
   - Tapping the speech bubble opens the registration panel through `useRegistration().open()`.
   - Desktop pointer tilt only when the pointer is fine; render loop pauses when the tab is hidden; falls back to a mint gradient when WebGL is unavailable.
 - Weaknesses / rough edges:
@@ -16,7 +16,7 @@ Source prototype: single-file HTML (Claude, Three.js r128 from a CDN, `albert-ne
   - The scene follows scroll position through section ids, not only `useScene()`. A section without its contract id will not move the story. The scene id is used only for the service-card pulse.
   - The four referral nodes read `#referral li` from the DOM. A Referral part without an `ol` of `li` steps leaves them unlit.
   - Not tested on a real mid-range Android over 4G.
-- Needs: no new dependency (`three` and `@types/three` are already in `package.json`). No new scene ids, no public assets.
+- Needs: no new dependency (`three` and `@types/three` are already in `package.json`). No new scene ids, no public assets. Needs `src/lib/motion.ts` and `src/hooks/useMotionMode.ts` (patch 0002).
 - Depends on other parts of this variant? none
 - Weight: about 9 KB of own code; three.js is a separate chunk, loaded after first paint.
 

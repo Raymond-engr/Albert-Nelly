@@ -35,3 +35,9 @@ Default to server components. Add `"use client"` only for state, effects, observ
 ## Performance budget
 
 First load JS for `/` should stay small. No animation library in main. Any heavy asset (three.js, GLB, video) is loaded with `next/dynamic` (`ssr: false`) from inside the slot that needs it, after first paint, with a still poster as fallback.
+
+## Motion modes (Full, Light, Still)
+
+Every `Stage` reads `useMotionMode()` (`src/hooks/useMotionMode.ts`) and honours all three modes: **full** (everything), **light** (no pointer tilt or idle float; cheaper rendering and fewer objects for 3D) and **still** (stroke already painted, no idle motion; scene changes still crossfade). The mode changes while the page is open, so a Stage reacts to changes and never reads it once. A 3D Stage calls `reportFps(fps)` from `src/lib/motion.ts` about every two seconds while it renders, so a slow device steps down by itself.
+
+Selection lives in `src/lib/motion.ts`: reduced motion, data saver, a slow connection or low memory set a ceiling, and a low frame rate lowers it further. In development only, `NEXT_PUBLIC_MOTION_MODE=full|light|still` pins the mode. Production builds ignore it.

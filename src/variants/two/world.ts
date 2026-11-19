@@ -1,6 +1,7 @@
 import * as THREE from "three";
+import type { MotionMode } from "@/types/motion";
 
-export type Mode = "full" | "light" | "still";
+export type Mode = MotionMode;
 
 // Brand constants for the 3D art (same hex values as the tokens in globals.css).
 export const G = 0x12b76a, FN = 0x06281e, MINT = 0xe9f8f0, SUN = 0xf7b733, CO = 0xff6f59;

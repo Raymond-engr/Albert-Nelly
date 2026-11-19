@@ -13,6 +13,18 @@ pnpm dev            # http://localhost:3000
 
 Without Supabase keys the site runs in **demo mode**: the registration form works end to end and opens WhatsApp, but nothing is saved. In development, an email starting with `fail` simulates a network error.
 
+## Motion modes
+
+Animation runs in three modes: **full**, **light** and **still**. By default the site adapts at runtime to the connection (data saver, 2G/3G, slow round trips), low memory, reduced motion and the frame rate it actually achieves. Changes are gradual: down one mode per second, up only after a better connection has held for 6 seconds. Browsers without the Network Information API (Safari, Firefox) adapt by frame rate and reduced motion only.
+
+To test one mode in development, add this to `.env.development.local` and restart `pnpm dev`:
+
+```
+NEXT_PUBLIC_MOTION_MODE=still   # full | light | still. Empty or missing = adapt.
+```
+
+Production builds ignore it. The current mode is on `<html data-motion>` and logged in the console in development. Logic: `src/lib/motion.ts`, hook: `src/hooks/useMotionMode.ts`.
+
 ## Connect Supabase
 
 1. Create a project. Run `supabase/migrations/20261118000000_create_leads.sql` in the SQL editor (or `supabase db push`).
