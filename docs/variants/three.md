@@ -16,18 +16,18 @@ Source prototype: Claude (Sonnet 5.5), single-file HTML "Albert Nelly prototype"
 ### Stage  (`src/variants/three/Stage.tsx`, `StageGL.tsx`, `scenes.ts`, `Stage.module.css`)
 - Looks like: A tilted white canvas on the right (top centre on phones) with a green stroke that paints itself once. Scrolling crossfades it into a wireframe, a browser and phone, shapes, a cap and board, two linked threads and a "Let’s talk" bubble. Real GLB scenes when WebGL is available, flat poster layers otherwise.
 - Strengths:
-  - Scroll is scrubbed continuously, so scenes blend instead of snapping. It follows whatever order the sections have in the page.
+  - Scroll is scrubbed continuously, so scenes blend instead of snapping. A scene change plays out across the section that introduces it, then holds. The hero blends canvas into wireframe from the first scroll, as in the HTML.
   - Three versions: Full 3D, Light 3D (about 340 triangles per scene) and Still. Reduced motion picks Still; phones, data saver and 4 cores or fewer pick Light.
   - The render loop rests while `dim` is set (Selected Work).
   - Desktop pointer tilt and a slow float.
 - Weaknesses / rough edges:
-  - Models are simple procedural shapes, not an artist's models, and are not Draco or meshopt compressed.
+  - Models are simple procedural shapes, not an artist's models, and are not Draco or meshopt compressed. The GLBs carry no materials, so three's default metal material is what gives the dark, translucent look. Keep r128 until the GLBs are re-exported with real materials.
   - Still posters for `shp` and `sch` reuse the devices poster. Real posters are not made yet (`public/posters` is empty).
   - The bubble hit area is not tilted with the 3D bubble.
   - Not tested in a real browser or on a phone yet.
-- Needs: `three` (already a dependency). GLBs in `public/variants/three/models/` (7 scenes, Full and `-light`). It sets `THREE.ColorManagement.enabled = false` because the vertex colours are display-ready.
+- Needs: `three-r128`, an alias of `three@0.128.0` (`"three-r128": "npm:three@^0.128.0"`), the exact version the approved HTML prototype rendered with, so the scenes look identical. It is only loaded on `/three`, after first paint. The newer `three` is untouched. GLBs in `public/variants/three/models/` (7 scenes, Full and `-light`).
 - Depends on other parts of this variant? none. It reads `data-scene` (and the optional `data-scene-path`) from any section. Services is the only part that uses `data-scene-path`.
-- Weight: about 150 KB gzip JS (three.js, loaded after first paint, only when WebGL exists), 2 KB CSS, assets about 238 KB (Full set) or 72 KB (Light set), one set per visitor
+- Weight: about 150 KB gzip JS (three r128, loaded after first paint, only when WebGL exists), 2 KB CSS, assets about 238 KB (Full set) or 72 KB (Light set), one set per visitor
 
 ### Hero  (`src/variants/three/Hero.tsx`)
 - Looks like: Big Sora headline, one supporting line, a Sunbeam "Start a conversation" button and a mint "See what we do" button, left-aligned over the canvas.

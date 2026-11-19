@@ -13,25 +13,31 @@ const clamp = (n: number) => Math.min(1, Math.max(0, n));
 
 /**
  * Where the page sits between scenes. Every [data-scene] section starts at its own scene
- * (or walks the ids in data-scene-path) and blends toward the next section's scene as the
- * visitor scrolls through it. Returns the target weight of each scene id.
+ * (or walks the ids in data-scene-path) and blends toward the next different scene as the
+ * visitor scrolls through it. Returns the target weight of each scene id and the active scene.
  */
-function target(): Record<string, number> {
+function target(): { w: Record<string, number>; active: string } {
   const secs = [...document.querySelectorAll<HTMLElement>("[data-scene]")];
+  const scenes = secs.map((e) => e.dataset.scene ?? "cv");
+  const paths = secs.map((e, i) => (e.dataset.scenePath ?? scenes[i]).split(" "));
+  // A scene change plays out across the section that introduces it, then holds until a different scene begins.
+  const ends = secs.map((_, i) => scenes.slice(i + 1).find((x) => x !== scenes[i]) ?? paths[i][paths[i].length - 1]);
   const mid = innerHeight * 0.5;
   let out: Record<string, number> = { cv: 1 };
+  let active = "cv";
   secs.forEach((e, i) => {
     const r = e.getBoundingClientRect();
     if (r.top > mid) return;
-    const path = (e.dataset.scenePath ?? e.dataset.scene ?? "cv").split(" ");
-    const chain = [...path, secs[i + 1]?.dataset.scene ?? path[path.length - 1]];
+    const start = i > 0 && scenes[i - 1] === scenes[i] ? ends[i - 1] : paths[i][0];
+    const chain = [start, ...paths[i].slice(1), ends[i]];
     const u = clamp((mid - r.top) / Math.max(1, r.height)) * (chain.length - 1);
     const k = Math.min(chain.length - 2, Math.floor(u));
     out = {};
     out[chain[k]] = 1 - (u - k);
     out[chain[k + 1]] = (out[chain[k + 1]] ?? 0) + (u - k);
+    active = scenes[i];
   });
-  return out;
+  return { w: out, active };
 }
 
 /** Fixed background: the 3D story (GLB scenes) over a flat poster rig that doubles as the Light and Still versions. */
@@ -76,7 +82,8 @@ export default function Stage() {
 
     const frame = (t: number) => {
       raf = requestAnimationFrame(frame);
-      const tg = still ? { [live.current.scene]: 1 } : target();
+      const tgt = still ? { w: { [live.current.scene]: 1 } as Record<string, number>, active: live.current.scene as string } : target();
+      const tg = tgt.w;
       let gs = 0;
       SCENE_ORDER.forEach((id, i) => {
         const goal = tg[id] ?? 0;
@@ -101,7 +108,7 @@ export default function Stage() {
         const fl = still ? 0 : Math.sin(t / 1400) * 8;
         r.style.transform = `translate3d(0,${fl}px,0) rotateX(${12 - sh.py * 8}deg) rotateY(${-16 + 8 * Math.sin(gs * 0.8) + sh.px * 14}deg)`;
       }
-      if (hit.current) hit.current.style.visibility = sh.w.bub > 0.6 ? "visible" : "hidden";
+      if (hit.current) hit.current.style.visibility = tgt.active === "bub" && sh.w.bub > 0.6 ? "visible" : "hidden";
     };
     raf = requestAnimationFrame(frame);
     return () => {

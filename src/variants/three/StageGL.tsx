@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useRef, type RefObject } from "react";
-import * as THREE from "three";
-import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+// three@0.128 on purpose: it is the exact version the approved HTML prototype rendered with, so the scenes look identical.
+import * as THREE from "three-r128";
 import type { SceneId } from "@/types/scene";
 import { glbUrl, SCENE_ORDER, type Shared } from "./scenes";
 
+type Loader = { load: (url: string, ok: (g: { scene: THREE.Group }) => void, progress?: undefined, fail?: (e: unknown) => void) => void };
 type Item = { root: THREE.Object3D; mats: THREE.Material[]; strokes: THREE.Mesh[]; hv: number };
 
 /** The real 3D: the seven GLB scenes, crossfaded by the weights the Stage computes from scroll. */
@@ -15,33 +16,35 @@ export default function StageGL({ shared, lite, onReady }: { shared: RefObject<S
   useEffect(() => {
     const canvas = ref.current;
     if (!canvas) return;
-    THREE.ColorManagement.enabled = false; // the GLBs carry display-ready vertex colours
-    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: !lite });
-    renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
-    renderer.setPixelRatio(Math.min(devicePixelRatio, lite ? 1.5 : 2));
+    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
     renderer.setSize(600, 600, false);
     const scene = new THREE.Scene();
     const cam = new THREE.PerspectiveCamera(35, 1, 0.1, 50);
     cam.position.z = 9;
     const group = new THREE.Group();
-    const sun = new THREE.DirectionalLight(0xffffff, 0.8 * Math.PI);
+    const sun = new THREE.DirectionalLight(0xffffff, 0.8);
     sun.position.set(2, 3, 5);
-    scene.add(new THREE.HemisphereLight(0xffffff, 0xbfe8d3, 0.95 * Math.PI), sun, group);
+    scene.add(new THREE.HemisphereLight(0xffffff, 0xbfe8d3, 0.95), sun, group);
 
     const items = new Map<SceneId, Item>();
     let dead = false, raf = 0, t0 = 0, ready = false;
-    const loader = new GLTFLoader();
 
     // Load scene by scene in the background so the first scene paints as early as possible.
     (async () => {
+      // r128's module loader imports a different "three". Its classic build attaches to a global THREE, so give it one.
+      const g = globalThis as unknown as { THREE?: Record<string, unknown> };
+      g.THREE = { ...THREE };
+      await import("three-r128/examples/js/loaders/GLTFLoader.js");
+      const Ctor = (g.THREE as unknown as { GLTFLoader: new () => Loader }).GLTFLoader;
+      const loader = new Ctor();
       for (const id of SCENE_ORDER) {
         if (dead) return;
         try {
-          const g = await loader.loadAsync(glbUrl(id, lite));
+          const gl = await new Promise<{ scene: THREE.Group }>((res, rej) => loader.load(glbUrl(id, lite), res, undefined, rej));
           if (dead) return;
-          const it: Item = { root: g.scene, mats: [], strokes: [], hv: 0 };
-          g.scene.visible = false;
-          g.scene.traverse((o) => {
+          const it: Item = { root: gl.scene, mats: [], strokes: [], hv: 0 };
+          gl.scene.visible = false;
+          gl.scene.traverse((o) => {
             const m = o as THREE.Mesh;
             if (!m.isMesh) return;
             const mat = m.material as THREE.MeshStandardMaterial;
@@ -52,7 +55,7 @@ export default function StageGL({ shared, lite, onReady }: { shared: RefObject<S
             it.mats.push(mat);
             if (/stroke/i.test(m.name)) it.strokes.push(m);
           });
-          group.add(g.scene);
+          group.add(gl.scene);
           items.set(id, it);
           if (!ready) { ready = true; onReady(); }
         } catch {
