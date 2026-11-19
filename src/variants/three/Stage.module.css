@@ -28,6 +28,9 @@
 .ph b + b { top: 96px; height: 24px; background: var(--g); }
 .th { stroke-dasharray: 1; stroke-dashoffset: 1; }
 /* While the WebGL scenes are showing, the flat posters step aside. Only the bubble text stays, over the 3D bubble. */
-.gl .ly:not(.bubL) { visibility: hidden; }
+.gl .ly:not(.bubL) { visibility: hidden; transition: visibility 0s 0.6s; }
+/* Mode changes (src/lib/motion.ts): the canvas and the posters crossfade over 0.6 s instead of cutting. */
+.sc > canvas { opacity: 0; transition: opacity 0.6s; }
+.gl .sc > canvas { opacity: 1; }
 .gl .bubL path { display: none; }
 .hit button { position: absolute; left: 20px; top: 110px; width: 260px; height: 190px; background: none; border: 0; border-radius: 40px; cursor: pointer; pointer-events: auto; visibility: hidden; }

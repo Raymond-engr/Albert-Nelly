@@ -2,6 +2,8 @@
 
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useMotionMode } from "@/hooks/useMotionMode";
+import { forcedMotionMode } from "@/lib/motion";
 import { useRegistration } from "@/providers/RegistrationProvider";
 import { useScene } from "@/providers/SceneProvider";
 import type { SceneId } from "@/types/scene";
@@ -48,12 +50,33 @@ export default function Stage() {
   const live = useRef({ scene, dim });
   const rig = useRef<HTMLDivElement>(null);
   const hit = useRef<HTMLButtonElement>(null);
-  const [still, setStill] = useState(false);
-  const [lite, setLite] = useState(false);
+  const [weak, setWeak] = useState(false);
   const [gx, setGx] = useState(false);
   const [gl, setGl] = useState(false);
   const [go, setGo] = useState(false);
   const ready = useCallback(() => setGl(true), []);
+
+  // Full, Light or Still comes from the shared engine (src/lib/motion.ts) and changes while the page is open.
+  // On top of it, 4 cores or fewer top out at Light, unless NEXT_PUBLIC_MOTION_MODE pins a mode in development.
+  const engine = useMotionMode();
+  const mode = !forcedMotionMode() && weak && engine === "full" ? "light" : engine;
+  const still = mode === "still", full = mode === "full";
+  const lite = !full; // Still keeps the Light set while the canvas fades out, so nothing reloads
+
+  // Leaving 3D (Still): keep the canvas for 0.7 s so it crossfades into the posters instead of cutting.
+  const wantGL = gx && !still;
+  const [prevWant, setPrevWant] = useState(false);
+  const [leaving, setLeaving] = useState(false);
+  if (prevWant !== wantGL) {
+    setPrevWant(wantGL);
+    setLeaving(prevWant && !wantGL);
+  }
+  const mountGL = wantGL || leaving;
+  useEffect(() => {
+    if (!leaving) return;
+    const id = setTimeout(() => { setLeaving(false); setGl(false); }, 700);
+    return () => clearTimeout(id);
+  }, [leaving]);
 
   useEffect(() => { live.current = { scene, dim }; });
 
@@ -62,10 +85,8 @@ export default function Stage() {
     const id = setTimeout(() => {
       let ok = false;
       try { ok = !!document.createElement("canvas").getContext("webgl"); } catch { /* no WebGL */ }
-      const nav = navigator as Navigator & { connection?: { saveData?: boolean } };
-      setStill(matchMedia("(prefers-reduced-motion: reduce)").matches);
       setGx(ok);
-      setLite(innerWidth < 860 || !!nav.connection?.saveData || (navigator.hardwareConcurrency || 8) <= 4);
+      setWeak((navigator.hardwareConcurrency || 8) <= 4);
       setGo(true);
     }, 200);
     return () => clearTimeout(id);
@@ -74,7 +95,7 @@ export default function Stage() {
   useEffect(() => {
     const sh = shared.current;
     let raf = 0, tx = 0, ty = 0;
-    const fine = matchMedia("(hover: hover) and (pointer: fine)").matches && !still;
+    const fine = matchMedia("(hover: hover) and (pointer: fine)").matches && full;
     const move = (e: PointerEvent) => { if (e.pointerType === "mouse") { tx = e.clientX / innerWidth - 0.5; ty = e.clientY / innerHeight - 0.5; } };
     const hl = (e: Event) => { sh.hl = (e as CustomEvent<SceneId | null>).detail; };
     if (fine) addEventListener("pointermove", move);
@@ -93,6 +114,7 @@ export default function Stage() {
       sh.gs = gs;
       sh.px += (tx - sh.px) * 0.08;
       sh.py += (ty - sh.py) * 0.08;
+      sh.fl += ((full ? 1 : 0) - sh.fl) * 0.05; // idle float eases in and out with the mode
       sh.dim = live.current.dim;
 
       const o = [0, 0, 0, 0, 0];
@@ -105,7 +127,7 @@ export default function Stage() {
         r.children[2]?.classList.toggle(s.hl, sh.hl === "dev" && o[2] > 0.2);
         r.querySelectorAll<SVGElement>("[data-wl]").forEach((e) => { e.style.strokeDashoffset = String(sh.w.cv); });
         r.querySelectorAll<SVGElement>("[data-th]").forEach((e) => { e.style.strokeDashoffset = String(1 - clamp(sh.w.net + sh.w.bub)); });
-        const fl = still ? 0 : Math.sin(t / 1400) * 8;
+        const fl = Math.sin(t / 1400) * 8 * sh.fl;
         r.style.transform = `translate3d(0,${fl}px,0) rotateX(${12 - sh.py * 8}deg) rotateY(${-16 + 8 * Math.sin(gs * 0.8) + sh.px * 14}deg)`;
       }
       if (hit.current) hit.current.style.visibility = tgt.active === "bub" && sh.w.bub > 0.6 ? "visible" : "hidden";
@@ -116,15 +138,15 @@ export default function Stage() {
       removeEventListener("pointermove", move);
       removeEventListener(HL_EVENT, hl);
     };
-  }, [still]);
+  }, [still, full]);
 
-  const cls = [s.root, dim && s.dim, still && s.still, go && s.go, gx && !still && s.gx, gl && !still && s.gl].filter(Boolean).join(" ");
+  const cls = [s.root, dim && s.dim, still && s.still, go && s.go, gx && !still && s.gx, gl && wantGL && s.gl].filter(Boolean).join(" ");
 
   return (
     <>
-      <div className={cls} data-s={scene} aria-hidden="true">
+      <div className={cls} data-s={scene} data-mode={mode} aria-hidden="true">
         <div className={s.sc}>
-          {gx && !still && <StageGL key={lite ? "l" : "f"} shared={shared} lite={lite} onReady={ready} />}
+          {mountGL && <StageGL shared={shared} lite={lite} onReady={ready} />}
           <div className={s.rig} ref={rig}>
             <div className={s.ly} style={{ opacity: 1 }}>
               <div className={s.cvs}>

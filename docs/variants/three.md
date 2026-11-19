@@ -17,15 +17,17 @@ Source prototype: Claude (Sonnet 5.5), single-file HTML "Albert Nelly prototype"
 - Looks like: A tilted white canvas on the right (top centre on phones) with a green stroke that paints itself once. Scrolling crossfades it into a wireframe, a browser and phone, shapes, a cap and board, two linked threads and a "Let’s talk" bubble. Real GLB scenes when WebGL is available, flat poster layers otherwise.
 - Strengths:
   - Scroll is scrubbed continuously, so scenes blend instead of snapping. A scene change plays out across the section that introduces it, then holds. The hero blends canvas into wireframe from the first scroll, as in the HTML.
-  - Three versions: Full 3D, Light 3D (about 340 triangles per scene) and Still. Reduced motion picks Still; phones, data saver and 4 cores or fewer pick Light.
+  - Three versions: Full 3D, Light 3D (about 340 triangles per scene) and Still. The mode comes from `useMotionMode()`: it adapts at runtime to the connection, memory, reduced motion and the frame rate this Stage reports, and `NEXT_PUBLIC_MOTION_MODE` pins it in development. Devices with 4 cores or fewer also top out at Light (unless a mode is pinned). Screen width does not matter.
+  - Mode changes are live and gradual. Full and Light swap model sets scene by scene with no gap (the old scene stays until its replacement has loaded). Still crossfades from the 3D canvas to the flat posters over 0.6 s. Idle float and pointer tilt (Full only) ease out. The stroke paints once per visit, even after a mode change.
   - The render loop rests while `dim` is set (Selected Work).
   - Desktop pointer tilt and a slow float.
 - Weaknesses / rough edges:
   - Models are simple procedural shapes, not an artist's models, and are not Draco or meshopt compressed. The GLBs carry no materials, so three's default metal material is what gives the dark, translucent look. Keep r128 until the GLBs are re-exported with real materials.
   - Still posters for `shp` and `sch` reuse the devices poster. Real posters are not made yet (`public/posters` is empty).
   - The bubble hit area is not tilted with the 3D bubble.
-  - Not tested in a real browser or on a phone yet.
-- Needs: `three-r128`, an alias of `three@0.128.0` (`"three-r128": "npm:three@^0.128.0"`), the exact version the approved HTML prototype rendered with, so the scenes look identical. It is only loaded on `/three`, after first paint. The newer `three` is untouched. GLBs in `public/variants/three/models/` (7 scenes, Full and `-light`).
+  - Going from Still back to 3D mounts a fresh WebGL canvas and reloads the models, so it takes a moment; the posters stay until the first scene is ready.
+  - Not tested on a real phone yet. Checked in desktop Chromium with software rendering (about 12 fps), where the frame-rate rule correctly stepped down to Still.
+- Needs: `three-r128`, an alias of `three@0.128.0` (`"three-r128": "npm:three@^0.128.0"`), the exact version the approved HTML prototype rendered with, so the scenes look identical. It is only loaded on `/three`, after first paint. The newer `three` is untouched. GLBs in `public/variants/three/models/` (7 scenes, Full and `-light`). Also uses `src/lib/motion.ts` and `src/hooks/useMotionMode.ts` (already on main).
 - Depends on other parts of this variant? none. It reads `data-scene` (and the optional `data-scene-path`) from any section. Services is the only part that uses `data-scene-path`.
 - Weight: about 150 KB gzip JS (three r128, loaded after first paint, only when WebGL exists), 2 KB CSS, assets about 238 KB (Full set) or 72 KB (Light set), one set per visitor
 

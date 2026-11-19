@@ -17,7 +17,8 @@ export const LAYER_OF: Record<SceneId, number> = { cv: 0, wire: 1, dev: 2, shp: 
 export const HL_EVENT = "albert:hl";
 
 /** One mutable bag the Stage writes every frame and the WebGL layer reads. */
-export type Shared = { w: Record<SceneId, number>; gs: number; px: number; py: number; hl: SceneId | null; dim: boolean };
+/** fl = how much idle float/tilt is on (1 in Full, eases to 0 otherwise). painted = the stroke has been painted once, so a remount never repaints it. */
+export type Shared = { w: Record<SceneId, number>; gs: number; px: number; py: number; hl: SceneId | null; dim: boolean; fl: number; painted: boolean };
 export const newShared = (): Shared => ({
-  w: { cv: 1, wire: 0, dev: 0, shp: 0, sch: 0, net: 0, bub: 0 }, gs: 0, px: 0, py: 0, hl: null, dim: false,
+  w: { cv: 1, wire: 0, dev: 0, shp: 0, sch: 0, net: 0, bub: 0 }, gs: 0, px: 0, py: 0, hl: null, dim: false, fl: 1, painted: false,
 });
