@@ -20,7 +20,8 @@ export const copy = {
     body: "We’re a small tech agency that treats every screen like a canvas. You talk to the people who design and build your project, and every price is a conversation.",
     facts: ["Five services, one team", "Priced in naira", "You can message us before you commit to anything"],
   },
-  services: { title: "What we do." },
+  // `lead` is an optional field used by variant three.
+  services: { title: "What we do.", lead: "Prices are starting points. Every project is talked through on WhatsApp first." },
   schools: {
     title: "School packages.",
     lead: "Compare the three side by side. Running costs are below, so nothing surprises you later.",
@@ -35,6 +36,13 @@ export const copy = {
     band: "Up to 10%",
     bandNote: "Agreed for each project.",
     cta: "Become a referrer",
+    // Optional fields used by variant three: a line under the title and a sample group chat.
+    lead: "Introduce a client. Follow the chat in a WhatsApp group. Earn a share when the deal closes.",
+    chat: [
+      { who: "You", text: "Meet Ada. She needs a school portal.", me: false },
+      { who: "Ada", text: "Hello, we need report cards online.", me: false },
+      { who: "Albert Nelly", text: "Welcome both. Here’s how we’ll work.", me: true },
+    ],
   },
   partners: {
     title: "Our partners.",

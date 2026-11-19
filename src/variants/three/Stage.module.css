@@ -1,0 +1,33 @@
+.root { position: fixed; inset: 0; perspective: 1100px; z-index: 0; pointer-events: none; overflow: hidden; transition: opacity 0.6s; }
+.dim { opacity: 0.3; }
+.sc, .hit { width: 300px; height: 400px; left: calc(100% - 340px - 5vw); top: calc(50% - 190px); transform: scale(var(--k, 1)); }
+.sc { position: absolute; }
+.hit { position: fixed; z-index: 3; pointer-events: none; }
+@media (max-width: 860px) { .sc, .hit { --k: 0.62; left: calc(50% - 150px); top: calc(14vh - 60px); } }
+.rig { position: absolute; inset: 0; transform-style: preserve-3d; }
+.rig svg { display: block; }
+.ly { position: absolute; inset: 0; pointer-events: none; transform-style: preserve-3d; opacity: 0; }
+.still .ly { transition: opacity 0.5s; }
+.cvs { position: absolute; inset: 0; background: #fff; border: 1px solid var(--line); border-radius: 22px; box-shadow: 0 0 0 7px var(--mint), 0 40px 70px -30px rgba(10, 125, 74, 0.45); }
+.sk { stroke-dasharray: 1; stroke-dashoffset: 1; }
+.go .sk { animation: pt 3s 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) forwards; }
+.gx .sk { animation: none; }
+.still .sk { animation: none; stroke-dashoffset: 0; }
+@keyframes pt { to { stroke-dashoffset: 0; } }
+.wl { fill: none; stroke: var(--gd); stroke-width: 2; stroke-dasharray: 1; stroke-dashoffset: 1; stroke-linecap: round; }
+.hl { filter: drop-shadow(0 0 10px var(--g)); }
+.br, .ph { position: absolute; border: 2px solid var(--gd); background: var(--card); }
+.br { left: 0; top: 70px; width: 230px; height: 150px; border-radius: 14px; transform: translateZ(10px); }
+.ph { right: 0; top: 170px; width: 92px; height: 176px; border-radius: 20px; transform: translateZ(60px); }
+.br i { position: absolute; top: 10px; left: 10px; width: 8px; height: 8px; border-radius: 50%; background: var(--line); }
+.br i + i { left: 24px; }
+.br i + i + i { left: 38px; }
+.br b, .ph b { position: absolute; left: 12px; right: 12px; top: 34px; height: 46px; border-radius: 8px; background: var(--mint); }
+.br b + b { top: 92px; right: 100px; height: 28px; background: var(--g); }
+.ph b { top: 22px; height: 60px; }
+.ph b + b { top: 96px; height: 24px; background: var(--g); }
+.th { stroke-dasharray: 1; stroke-dashoffset: 1; }
+/* While the WebGL scenes are showing, the flat posters step aside. Only the bubble text stays, over the 3D bubble. */
+.gl .ly:not(.bubL) { visibility: hidden; }
+.gl .bubL path { display: none; }
+.hit button { position: absolute; left: 20px; top: 110px; width: 260px; height: 190px; background: none; border: 0; border-radius: 40px; cursor: pointer; pointer-events: auto; visibility: hidden; }

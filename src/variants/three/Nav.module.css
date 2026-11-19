@@ -1,0 +1,11 @@
+.nav { position: fixed; top: 0; left: 0; right: 0; z-index: 20; display: flex; align-items: center; gap: 22px; padding: calc(12px + env(safe-area-inset-top, 0px)) 5vw 12px; transition: background 0.25s; }
+.sol { background: color-mix(in srgb, var(--bg) 86%, transparent); backdrop-filter: blur(10px); }
+.lg { font: 700 20px var(--font-display); margin-right: auto; color: var(--ink); text-decoration: none; }
+.links { display: flex; align-items: center; gap: 22px; }
+.links a { color: var(--ink); text-decoration: none; font-weight: 500; }
+.b { font: 600 16px var(--font-sans); min-height: 48px; padding: 0 22px; border-radius: 14px; border: 0; cursor: pointer; background: var(--mint); color: var(--ink); display: inline-flex; align-items: center; justify-content: center; text-decoration: none; translate: none; transition: none; }
+.b:hover { translate: none; }
+.burger { display: none; }
+.menu { position: absolute; top: 100%; left: 0; right: 0; display: grid; gap: 4px; padding: 12px 5vw 22px; background: var(--bg); }
+.menu a { color: var(--ink); text-decoration: none; font: 600 20px var(--font-display); min-height: 48px; display: flex; align-items: center; }
+@media (max-width: 760px) { .links { display: none; } .burger { display: inline-flex; } }

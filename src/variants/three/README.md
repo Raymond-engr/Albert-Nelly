@@ -1,5 +1,4 @@
 # Variant three (spare parts)
-
-Empty on purpose. Drop converted parts here and list them in `slots.ts`.
-Parts catalog for this variant: `docs/variants/three.md` (create it when you convert).
-Route: `/three`. Instructions: `docs/CONVERT_PROTOTYPE.md`.
+"From canvas to code": a scroll-driven 3D story. Converted from a single-file HTML prototype.
+Parts catalog: `docs/variants/three.md`. Route: `/three`. Instructions: `docs/CONVERT_PROTOTYPE.md`.
+GLB scenes (Full and Light): `public/variants/three/models/`.
