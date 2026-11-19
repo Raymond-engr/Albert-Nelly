@@ -1,13 +1,16 @@
 import { mainSlots } from "@/components/showroom/slots";
 import type { Slots } from "@/types/slots";
+import Hero from "./Hero";
+import Nav from "./Nav";
+import RegistrationPanel from "./RegistrationPanel";
 
 /**
- * Variant "four". Every slot starts as main's version. Replace a slot by creating
- * a file in this folder (for example ./Hero.tsx) and importing it below.
- * See docs/CONVERT_PROTOTYPE.md.
+ * Variant "four": the "From stroke to chat" prototype (one scroll-scrubbed hero, a quiet nav and a chat-style
+ * registration). Every slot not listed here is main's version. See docs/variants/four.md.
  */
 export const fourSlots: Slots = {
   ...mainSlots,
-  // Hero,
-  // Stage,
+  Nav,
+  Hero,
+  RegistrationPanel,
 };

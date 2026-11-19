@@ -1,0 +1,39 @@
+.hero { margin-top: calc(-1 * env(safe-area-inset-top, 0px)); }
+.track { height: 430svh; }
+.stage { position: sticky; top: 0; height: 100svh; display: flex; flex-direction: column; overflow: hidden;
+  padding: calc(env(safe-area-inset-top, 0px) + 64px) 0 env(safe-area-inset-bottom, 0px);
+  background: radial-gradient(60% 45% at 50% 40%, var(--mint), transparent 70%), linear-gradient(var(--line) 1px, transparent 1px) 0 0 / 44px 44px, linear-gradient(90deg, var(--line) 1px, transparent 1px) 0 0 / 44px 44px, var(--bg); }
+.stage::after { content: ""; position: absolute; inset: 0; background: radial-gradient(70% 60% at 50% 45%, transparent 40%, var(--bg)); pointer-events: none; }
+.art { flex: 1; min-height: 0; display: grid; place-items: center; perspective: 900px; position: relative; z-index: 1; padding: 0 20px; }
+.svg { height: 100%; width: 100%; max-width: 520px; overflow: visible; transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); transition: transform 0.25s ease-out; animation: float 7s ease-in-out infinite; }
+@keyframes float { 50% { translate: 0 -8px; } }
+.canvas { filter: drop-shadow(0 22px 28px rgba(6, 40, 30, 0.22)); }
+.cam { transform-origin: 200px 250px; }
+.brush { stroke-dasharray: 1; stroke-dashoffset: 1; animation: paint 3s 0.7s cubic-bezier(0.3, 0.6, 0.2, 1) forwards; }
+@keyframes paint { to { stroke-dashoffset: 0; } }
+.w { stroke-dasharray: 1; stroke-dashoffset: 1; }
+.blk { transform-box: fill-box; transform-origin: 0 50%; transform: scaleX(0); }
+.bub { transform-origin: 200px 250px; opacity: 0; pointer-events: none; cursor: pointer; }
+.bubText { font-family: var(--font-display); }
+.cap { position: relative; z-index: 5; height: 236px; margin: 0 20px 16px; }
+.c { position: absolute; inset: 0; opacity: 0; transform: translateY(10px); transition: opacity 0.45s ease-out, transform 0.45s ease-out; pointer-events: none; }
+.c.on { opacity: 1; transform: none; pointer-events: auto; }
+.c small { display: block; font-weight: 600; color: var(--gd); margin-bottom: 6px; }
+.c h1, .c h2 { font: 700 clamp(32px, 8vw, 56px) / 1.04 var(--font-display); letter-spacing: -0.035em; margin: 0 0 10px; }
+.c p { margin: 0 0 16px; color: color-mix(in srgb, var(--ink) 75%, var(--bg)); max-width: 44ch; }
+.row { display: flex; flex-wrap: wrap; gap: 10px; }
+.btn { min-height: 44px; padding: 0 20px; border-radius: 12px; border: 1px solid var(--ink); background: transparent; color: var(--ink); cursor: pointer; font: 600 15px var(--font-sans); transition: transform 0.2s ease-out, background 0.2s ease-out; }
+.btn:hover { transform: translateY(-1px); }
+.sun { background: var(--sun); color: #06281e; border-color: transparent; }
+.ticks { position: absolute; right: 20px; top: 50%; display: flex; flex-direction: column; gap: 10px; z-index: 5; translate: 0 -50%; }
+.ticks i { width: 4px; height: 18px; border-radius: 2px; background: var(--line); transition: background 0.3s, height 0.3s; }
+.ticks i.tk { background: var(--g); height: 30px; }
+@media (min-width: 900px) {
+  .stage { display: grid; grid-template-columns: 5fr 6fr; grid-template-rows: 1fr; }
+  .cap { grid-column: 1; grid-row: 1; align-self: center; height: 320px; margin: 0 0 0 48px; }
+  .art { grid-column: 2; grid-row: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .stage, .stage * { animation: none !important; transition: none !important; }
+  .brush { stroke-dashoffset: 0; }
+}

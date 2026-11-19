@@ -5,6 +5,16 @@ export const copy = {
     primary: "See what we do",
     secondary: "Start a conversation",
   },
+  // Optional fields used by variant four ("From stroke to chat"). Other parts may ignore them.
+  story: {
+    lead: "Websites, apps, design and art for founders, schools and businesses.",
+    scenes: [
+      { label: "UI/UX design", title: "It starts with one stroke.", body: "We sketch the idea, shape the screens and test them before a single line of code." },
+      { label: "Web and mobile development", title: "Then we make it real.", body: "One design, built for the phone in your hand and the browser on your desk." },
+    ],
+    talkLead: "Tap the bubble. A short chat, then WhatsApp.",
+    alt: "A white canvas. A green brushstroke becomes a screen wireframe, then a phone and browser, then a speech bubble that says Let’s talk.",
+  },
   about: {
     title: "Where art meets technology.",
     body: "We’re a small tech agency that treats every screen like a canvas. You talk to the people who design and build your project, and every price is a conversation.",
