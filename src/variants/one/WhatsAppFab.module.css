@@ -1,5 +1,0 @@
-.fab { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 30;
-  display: inline-flex; align-items: center; gap: 10px; min-height: 56px; padding: 0 20px; border-radius: 999px; border: 2px solid var(--g);
-  background: #06281e; color: #fff; font: 600 16px var(--font-sans); cursor: pointer; box-shadow: 0 10px 30px -10px rgba(6, 40, 30, 0.5); transition: transform 0.2s ease-out; }
-.fab:hover { transform: translateY(-2px); }
-@media (prefers-reduced-motion: reduce) { .fab { transition: none; } .fab:hover { transform: none; } }

@@ -96,3 +96,21 @@ export function makePainting(w: number, h: number, mark = "AN"): Painting {
     },
   };
 }
+
+/**
+ * Plays the stroke once: it waits 900 ms (so the text appears first), then paints for about 3 seconds.
+ * With reduced motion the finished mark is drawn at once. Call the returned function every frame.
+ */
+export function stepper(p: Painting, reduced: boolean) {
+  let fin = reduced;
+  if (reduced) p.paint(1.001);
+  const start = performance.now() + 900;
+  const tick = (ts: number): boolean => {
+    if (fin || ts < start) return false;
+    const q = Math.min(1, (ts - start) / 3200);
+    p.paint(q < 0.5 ? 2 * q * q : 1 - Math.pow(-2 * q + 2, 2) / 2);
+    if (q >= 1) fin = true;
+    return true;
+  };
+  return { tick, finished: () => fin };
+}

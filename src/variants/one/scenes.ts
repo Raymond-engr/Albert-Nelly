@@ -3,15 +3,21 @@ import type { SceneId } from "@/types/scene";
 
 /** Where a piece rests (h) and where it flies in from (o). q, fl, th, cf are per-scene extras. */
 type Piece = { h: [number, number, number]; o: [number, number, number]; q?: [number, number, number]; fl?: number; th?: boolean; cf?: boolean };
+/** m is 1, or 0 when the visitor prefers reduced motion. cx and cy are the smoothed pointer position (-0.5 to 0.5). */
+export type Ctx = { m: number; cx: number; cy: number };
 export type SceneObj = {
   id: SceneId;
   group: THREE.Group;
-  /** Design size in scene units, used to fit the object to the screen. */
+  /** Design size in scene units, used to fit the object into its anchor element. */
   dw: number;
   dh: number;
-  /** 0 = scattered and hidden, 1 = assembled. Eased by the Stage. */
+  /** 0 = scattered, 1 = assembled. Eased by the render loop. */
   e: number;
-  update?: (t: number, s: SceneObj) => void;
+  /** 0 to 1, eased: how "lit" the object is while its card is hovered. */
+  h: number;
+  /** The element in the page this object sits on: [data-stage="<id>"]. */
+  a: Element | null;
+  update?: (t: number, s: SceneObj, c: Ctx) => void;
 };
 
 // Brand constants for the 3D materials (raw hex is allowed for brand constants in art).
@@ -37,7 +43,7 @@ export function buildScenes(art: HTMLCanvasElement, ratio: number) {
 
   const scenes: SceneObj[] = [];
   const add = (id: SceneId, dw: number, dh: number, update?: SceneObj["update"]) => {
-    const s: SceneObj = { id, group: new THREE.Group(), dw, dh, e: 0, update };
+    const s: SceneObj = { id, group: new THREE.Group(), dw, dh, e: 0, h: 0, a: null, update };
     scenes.push(s);
     return s;
   };
@@ -56,28 +62,28 @@ export function buildScenes(art: HTMLCanvasElement, ratio: number) {
     s.group.add(l);
   };
 
-  /* cv: the painted canvas */
+  /* 1 cv: the painted canvas */
   const texture = new THREE.CanvasTexture(art);
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.anisotropy = 4;
   extra.push(texture);
-  const cv = add("cv", 2.4 * ratio, 2.4, (t, s) => {
-    s.group.rotation.set(-0.08, -0.3 + Math.sin(t * 0.6) * 0.03, 0.05);
-    s.group.position.y += Math.sin(t * 0.8) * 0.07;
+  const cv = add("cv", 2.4 * ratio, 2.4, (t, s, c) => {
+    s.group.rotation.set(-0.12 + c.cy * 0.3, -0.3 + c.cx * 0.35, 0.05 + Math.sin(t * 0.6) * 0.015 * c.m);
+    s.group.position.y += Math.sin(t * 0.8) * 0.07 * c.m * s.group.scale.x;
   });
   const edge = new THREE.MeshStandardMaterial({ color: 0xeef3f0, roughness: 0.9 });
   const face = new THREE.MeshBasicMaterial({ map: texture });
   extra.push(edge, face);
   cv.group.add(new THREE.Mesh(box(2.4 * ratio, 2.4, 0.1), [edge, edge, edge, edge, face, edge]));
 
-  /* wire: stroke to wireframe */
-  const wr = add("wire", 2.5, 1.45, (t, s) => { s.group.rotation.y = Math.sin(t * 0.5) * 0.25; });
+  /* 2 wire: stroke to wireframe */
+  const wr = add("wire", 2.5, 1.45, (t, s, c) => { s.group.rotation.y = Math.sin(t * 0.5) * 0.25 * c.m; });
   wire(wr, 2.4, 0.28, 0, 0.5);
   [-0.85, 0, 0.85].forEach((x) => wire(wr, 0.7, 0.6, x, -0.05));
   wire(wr, 1, 0.26, 0, -0.62);
 
-  /* dev: screen to devices */
-  const dv = add("dev", 2.5, 1.3, (t, s) => { s.group.rotation.y = Math.sin(t * 0.5) * 0.3; });
+  /* 3 dev: screen to devices */
+  const dv = add("dev", 2.5, 1.3, (t, s, c) => { s.group.rotation.y = Math.sin(t * 0.5) * 0.3 * c.m; });
   piece(dv, box(1.7, 1.15, 0.06), BR, -0.35, 0, 0);
   piece(dv, box(1.7, 0.18, 0.07), GR, -0.35, 0.5, 0.01);
   piece(dv, box(0.6, 0.4, 0.07), WH, -0.7, 0.1, 0.02);
@@ -89,7 +95,7 @@ export function buildScenes(art: HTMLCanvasElement, ratio: number) {
   piece(dv, box(0.4, 0.12, 0.1), BR, 0.95, -0.1, 0.17);
   piece(dv, box(0.4, 0.12, 0.1), BR, 0.95, -0.3, 0.17);
 
-  /* shp: shapes in orbit */
+  /* 4 shp: shapes in orbit */
   const sh = add("shp", 2.6, 1.6, (t, s) => {
     for (const c of s.group.children) {
       const p = data(c);
@@ -111,8 +117,8 @@ export function buildScenes(art: HTMLCanvasElement, ratio: number) {
   });
   piece(sh, box(0.5, 0.9, 0.07), NI, 0, 0, 0);
 
-  /* sch: cap and board */
-  const sc = add("sch", 3, 1.5, (t, s) => { s.group.rotation.y = Math.sin(t * 0.4) * 0.2; });
+  /* 5 sch: cap and board */
+  const sc = add("sch", 3, 1.5, (t, s, c) => { s.group.rotation.y = Math.sin(t * 0.4) * 0.2 * c.m; });
   piece(sc, box(1.5, 1, 0.06), DP, 0.55, 0.1, 0);
   piece(sc, box(1.58, 0.04, 0.1), NI, 0.55, -0.42, 0.03);
   [0, 1, 2].forEach((i) => {
@@ -124,12 +130,12 @@ export function buildScenes(art: HTMLCanvasElement, ratio: number) {
   piece(sc, geo(new THREE.CylinderGeometry(0.02, 0.02, 0.5, 6)), SU, -0.3, -0.12, 0.2);
   piece(sc, geo(new THREE.SphereGeometry(0.08, 10, 8)), SU, -0.3, -0.4, 0.2);
 
-  /* net: threads and handshake */
-  const nt = add("net", 3, 2.2, (t, s) => {
-    for (const c of s.group.children) {
-      const p = data(c);
-      if (p.th) c.scale.setScalar(Math.max(0.001, s.e));
-      else if (p.fl !== undefined) p.h[1] = p.fl + Math.sin(t + p.fl * 5) * 0.06;
+  /* 6 net: threads and handshake */
+  const nt = add("net", 3, 2.2, (t, s, c) => {
+    for (const ch of s.group.children) {
+      const p = data(ch);
+      if (p.th) ch.scale.setScalar(Math.max(0.001, s.e));
+      else if (p.fl !== undefined) p.h[1] = p.fl + Math.sin(t + p.fl * 5) * 0.06 * c.m;
     }
   });
   for (let i = 0; i < 6; i++) {
@@ -146,7 +152,7 @@ export function buildScenes(art: HTMLCanvasElement, ratio: number) {
   piece(nt, bar, DP, 0.33, 0, 0.05, [0, 0, Math.PI / 2]);
   piece(nt, geo(new THREE.SphereGeometry(0.2, 14, 10)), SU, 0, 0, 0.1);
 
-  /* bub: let's talk */
+  /* 7 bub: let's talk */
   const label = document.createElement("canvas");
   label.width = 512;
   label.height = 200;
@@ -164,11 +170,11 @@ export function buildScenes(art: HTMLCanvasElement, ratio: number) {
   extra.push(labelTex, labelMat);
   const text = new THREE.Mesh(geo(new THREE.PlaneGeometry(1.9, 0.74)), labelMat);
   text.position.set(0, 0.1, 0.48);
-  const bb = add("bub", 2.8, 1.8, (t, s) => {
+  const bb = add("bub", 2.8, 1.8, (t, s, c) => {
     const k = 0.6 + 0.4 * s.e;
     s.group.children[0].scale.set(1.3 * k, 0.9 * k, 0.45);
-    s.group.rotation.y = Math.sin(t * 0.5) * 0.2;
-    for (const c of s.group.children) if (data(c).cf) c.scale.setScalar(Math.max(0.001, 1 - s.e));
+    s.group.rotation.y = Math.sin(t * 0.5) * 0.2 * c.m;
+    for (const ch of s.group.children) if (data(ch).cf) ch.scale.setScalar(Math.max(0.001, 1 - s.e));
     text.visible = s.e > 0.7;
   });
   piece(bb, geo(new THREE.SphereGeometry(1, 24, 16)), GR, 0, 0.1, 0);

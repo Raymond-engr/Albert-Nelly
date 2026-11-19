@@ -1,48 +1,38 @@
 # Variant one catalog
-Source prototype: single-file HTML (Claude, Three.js r128 from a CDN), "Canvas to Code": a white painted canvas where one green brush writes the letters AN, then becomes a wireframe, devices, orbiting shapes, a school, a network and a speech bubble.
+Source prototype: single-file HTML ("Canvas to Code"). White painted canvas, one green brush that writes AN, scenes that assemble on top of the page content. This variant reproduces it exactly: same layout, same wording, same behaviour, light only. It fills all 13 slots and uses nothing from main's look, copy or data (main's Nav, Blueprint toggle and burger menu do not appear).
+
+## How it fits together
+- `proto.module.css` is the prototype stylesheet. Every rule is scoped under `.t`, which also re-declares the light tokens, so main's global styles and dark mode cannot change the look. Each part renders inside `<div className={s.t}>`.
+- Copy lives in `src/data/one.ts` (the prototype's own placeholder text). Main's data files are untouched.
+- Every part is prop-less and reads only `data/one.ts` and the shared providers. Sections still wrap `SceneSection` with a scene id, so main's Stage (or another variant's) works with them too.
+- 3D anchors: a section places a `<div data-stage="cv|wire|dev|shp|sch|net|bub">` where an object should appear. The Stage finds these elements by that attribute and ignores `useScene()`. A section without an anchor simply has no object.
+- Buttons open the panel through `OpenBtn` (same provider as main's `OpenButton`, with this variant's classes).
 
 ## Parts
-### Stage  (`src/variants/one/Stage.tsx`, `StageGL.tsx`, `StillArt.tsx`, `painting.ts`, `scenes.ts`, `Stage.module.css`)
-- Looks like: A white canvas floats in the right half of the screen (lower middle on phones). A single green brush paints the letters AN in about three seconds, once. On each scene change the objects fly in and assemble: wireframe screen, browser and phone, orbiting shapes, cap and board with a warmer light, six logo tiles joined by threads to an abstract handshake, and a "Let's talk" bubble.
-- Strengths:
-  - Renders all seven scene ids, driven only by `useScene()`; honours `dim` by fading and then pausing the render loop.
-  - Fully procedural: no model files, so no download beyond three.js itself.
-  - Three tiers: full 3D, a designed Still poster (reduced motion, data saver, no WebGL, and while 3D loads), and 30 fps and lower pixel ratio on phones.
-  - Desktop pointer tilt; render loop pauses when the tab is hidden.
-- Weaknesses / rough edges:
-  - The Still poster is one image (the blank canvas, or the finished AN mark). It does not change per scene.
-  - Earlier scenes do not stay as a faint trace; they scatter and hide.
-  - Only the letters A and N are defined in `painting.ts`. Another mark needs new stroke paths.
-  - There is no Light tier between Full and Still beyond pixel ratio, frame cap and no antialiasing on phones.
-  - Not yet tested on a real mid-range Android over 4G.
-- Needs: new dependency `three` (runtime) and `@types/three` (dev). No new data fields, no new scene ids, no public assets.
-- Depends on other parts of this variant? none
-- Weight: about 5 KB of own code; three.js adds roughly 150 to 200 KB gzipped, in its own chunk, loaded only when the device can run 3D.
+### Nav (`Nav.tsx`)
+- Looks like: transparent logo bar that turns white with blur after 40 px; five section links; one outline button ("Start a conversation", "Talk to us" on phones); a green stroke along the top edge that grows as you scroll.
+- Strengths: exactly the prototype header; no Blueprint toggle.
+- Weaknesses: no mobile full-screen menu (the prototype has none); the links disappear below 768 px.
+- Needs: nothing. Depends on other parts? none.
 
-### Referral  (`src/variants/one/Referral.tsx`)
-- Looks like: A single vertical green stroke runs down the left of the four steps. Each step has a node on the stroke that fills green as the step passes the lower part of the screen, and dims again when scrolled back.
-- Strengths: calm, one column, works at 360 px; reads from `data/referral.ts` and `copy.referral`; respects reduced motion.
-- Weaknesses / rough edges: the commission line sits under the steps (the prototype order) rather than in a band above them; the single column leaves empty space on wide screens.
-- Needs: nothing.
-- Depends on other parts of this variant? none
-- Weight: under 1 KB of CSS and JS.
+### Stage (`Stage.tsx`, `stage-gl.ts`, `scenes.ts`, `painting.ts`)
+- Looks like: a fixed, click-through 3D layer above the page. The canvas on the hero paints AN once; wireframe, devices and shapes sit on three service cards; cap and board on Schools; threads and handshake on Partners; a "Let's talk" bubble on the Join button. Objects assemble as they scroll in and light up while their card is hovered. The light turns warmer on Schools.
+- Strengths: fully procedural (no model files); 30 fps and lower pixel ratio on phones; hidden scenes cost nothing and the loop idles when no object is on screen (Selected Work); reduced motion keeps the scenes but removes sway and paints the finished mark at once; Data Saver or no WebGL gives the Still version (the same stroke on a flat canvas, the other objects hidden, the bubble shown as a green pill).
+- Weaknesses: needs the `data-stage` anchors from this variant's sections; only A and N exist in `painting.ts`; three.js r187 lighting is tuned by eye against the prototype's r128 and may need a small adjustment; not tested on a real mid-range Android over 4G.
+- Needs: dependency `three` and `@types/three` (already in package.json). Depends on other parts? yes, Hero, Services, Schools, Partners and Join provide the anchors.
 
-### WhatsAppFab  (`src/variants/one/WhatsAppFab.tsx`)
-- Looks like: A dark pill with a green outline, a generic chat icon and the words "Chat with us". Opens the registration panel.
-- Strengths: the label tells first-time visitors what the button does; contrast is high on any background.
-- Weaknesses / rough edges: wider than main's round button, so it covers more of the page on a 360 px phone; the label is English only.
-- Needs: nothing.
-- Depends on other parts of this variant? none
-- Weight: under 1 KB.
+### Hero, About, Services, Schools, Work, Referral, Partners, Join, Footer (`*.tsx`)
+- Look like: the prototype sections, unchanged. Services has five cards (three carry a 3D object, Art and Painting has the "with our partners" badge). Schools has three package cards with the middle one emphasised, an AI tooltip and a collapsible yearly costs table. Work has All, Design and Development filters over four placeholder projects. Referral is four steps on one stroke whose nodes light up in order. Partners has a logo strip and a "How to partner" card. Join is the bubble button. Footer is the prototype's single placeholder line.
+- Strengths: wording and spacing match the prototype; all open the panel with the right visitor type and a context chip.
+- Weaknesses: costs, project cards and logos are placeholders; Work sits on a Stage scene with `dim` but the quiet moment really comes from having no anchor.
+- Needs: nothing. Depends on other parts? only the Stage anchors above.
 
-### RegistrationPanel  (`src/variants/one/RegistrationPanel.tsx`)
-- Looks like: A slide-over on desktop and a full-screen sheet on phones. Back, the context chip and Close sit in one header row. Step 1 is four large rounded choices. Success headings get a painted green underline; the save button shows a stroke sweeping across while saving.
-- Strengths: keeps `useRegistrationFlow()` untouched; keeps the dialog role, labelled heading, Escape, focus on the heading on every step, all four visitor types, optional birthday, honeypot, Open WhatsApp button and copy-number link; Sunbeam is used for the single primary action on each step.
-- Weaknesses / rough edges: the prototype's one-line descriptions under each choice were not carried over, because they would be new copy; Back now lives in the header instead of under the form; no focus trap beyond the page being `inert`.
-- Needs: nothing.
-- Depends on other parts of this variant? none
-- Weight: about 3 KB of JS and CSS.
+### WhatsAppFab (`WhatsAppFab.tsx`)
+- Looks like: a dark pill with a green outline, a generic chat icon and "Chat with us". Opens the panel.
+- Weaknesses: wider than a round icon button on a 360 px phone.
 
-## Not converted
-- **Nav**: the prototype's top bar has no mobile menu and no Blueprint toggle, which the Nav contract requires. Main's Nav stays.
-- **Hero, About, Services, Schools, Work, Partners, Join, Footer**: the prototype's versions carry the same content as main's with only small layout differences (a different hero line, an All filter on Work, a footer that is one placeholder line). Main's data and parts win, and forking them would only duplicate code. The prototype's scene anchoring (each section hosting its own 3D object) does not fit the fixed Stage contract, so it was replaced by `Stage` reading `useScene()`.
+### RegistrationPanel (`RegistrationPanel.tsx`)
+- Looks like: slide-over on desktop, full-screen sheet on phones. Header row with Back, context chip and Close. Four large choices with a line under each, then the form, then "You're in." with a painted underline and a countdown, plus every state in the brief.
+- Strengths: uses `useRegistrationFlow()` untouched, so saving, the WhatsApp link and the countdown are main's; keeps the honeypot, `inert` page, Escape, Tab trap and focus on the heading.
+- Weaknesses: validation messages and labels are the prototype's, shown for the fields the hook flags (the hook decides what is invalid, so the WhatsApp number is not required for "Just keep me updated"); the copy-number line shows main's configured number.
+- Needs: nothing. Depends on other parts? none.

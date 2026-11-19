@@ -1,49 +1,44 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { OpenButton } from "@/components/shared/OpenButton";
 import { SceneSection } from "@/components/shared/SceneSection";
-import { copy } from "@/data/copy";
-import { referralSteps } from "@/data/referral";
-import s from "./Referral.module.css";
+import { oneCopy } from "@/data/one";
+import { OpenBtn } from "./OpenBtn";
+import s from "./proto.module.css";
 
-/** A single vertical stroke with four nodes that light up in order as the visitor scrolls. */
+/** Four steps on one stroke. Each node lights up, in order, as its step passes the lower part of the screen. */
 export default function Referral() {
+  const c = oneCopy.referral;
   const refs = useRef<(HTMLLIElement | null)[]>([]);
-  const [lit, setLit] = useState<boolean[]>(() => referralSteps.map(() => false));
+  const [lit, setLit] = useState<boolean[]>(() => c.steps.map(() => false));
 
   useEffect(() => {
-    const io = new IntersectionObserver(
-      (entries) =>
-        entries.forEach((e) => {
-          const i = Number((e.target as HTMLElement).dataset.i);
-          // On once the step passes the lower part of the screen, and it stays on while it is above.
-          const on = e.isIntersecting || e.boundingClientRect.top < 0;
-          setLit((a) => a.map((v, k) => (k === i ? on : v)));
-        }),
-      { rootMargin: "0px 0px -28% 0px" },
-    );
-    refs.current.forEach((el) => el && io.observe(el));
-    return () => io.disconnect();
+    const on = () => {
+      const next = refs.current.map((el) => !!el && el.getBoundingClientRect().top < innerHeight * 0.72);
+      setLit((prev) => (prev.every((v, i) => v === next[i]) ? prev : next));
+    };
+    const first = requestAnimationFrame(on);
+    addEventListener("scroll", on, { passive: true });
+    return () => {
+      cancelAnimationFrame(first);
+      removeEventListener("scroll", on);
+    };
   }, []);
 
   return (
-    <SceneSection scene="net" id="referral" className="section">
-      <div className="wrap">
-        <div className="col">
-          <h2>{copy.referral.title}</h2>
-          <ol className={s.path}>
-            {referralSteps.map((st, i) => (
-              <li key={st.title} data-i={i} ref={(el) => { refs.current[i] = el; }} className={`${s.step} ${lit[i] ? s.on : ""}`}>
-                <h3>{st.title}</h3>
-                <p>{st.text}</p>
-              </li>
-            ))}
-          </ol>
-          <p className={s.band}>{copy.referral.band}. {copy.referral.bandNote}</p>
-          <OpenButton type="refer" variant="sun">{copy.referral.cta}</OpenButton>
-        </div>
-      </div>
-    </SceneSection>
+    <div className={s.t}>
+      <SceneSection scene="net" id="referral" className={s.sec}>
+        <h2>{c.title}</h2>
+        <ul className={s.steps}>
+          {c.steps.map(([b, rest], i) => (
+            <li key={b} ref={(el) => { refs.current[i] = el; }} className={lit[i] ? s.on : undefined}>
+              <b>{b}</b>{rest}
+            </li>
+          ))}
+        </ul>
+        <p className={s.band}>{c.band}</p>
+        <OpenBtn type="refer" className={`${s.btn} ${s.sun}`}>{c.cta}</OpenBtn>
+      </SceneSection>
+    </div>
   );
 }
