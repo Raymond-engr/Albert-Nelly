@@ -5,6 +5,7 @@ import { OpenButton } from "@/components/shared/OpenButton";
 import { SceneSection } from "@/components/shared/SceneSection";
 import { copy } from "@/data/copy";
 import { referralSteps } from "@/data/referral";
+import PhoneChat from "./PhoneChat";
 import s from "./Referral.module.css";
 
 export default function Referral() {
@@ -40,17 +41,13 @@ export default function Referral() {
           ))}
         </ol>
         <div className={s.mid}>
-          <div>
+          <div className={s.side}>
             <p className={s.cm}>{copy.referral.band}</p>
             <p>{copy.referral.bandNote}</p>
+            <OpenButton type="refer" className={`${s.b} ${s.g}`}>{copy.referral.cta}</OpenButton>
           </div>
-          <div className={s.chat} aria-hidden="true">
-            {copy.referral.chat.map((m) => (
-              <div key={m.who} className={`${s.m} ${m.me ? s.me : ""}`}><small>{m.who}</small>{m.text}</div>
-            ))}
-          </div>
+          <PhoneChat />
         </div>
-        <OpenButton type="refer" className={`${s.b} ${s.g}`}>{copy.referral.cta}</OpenButton>
       </div>
     </SceneSection>
   );

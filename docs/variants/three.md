@@ -59,13 +59,24 @@ Source prototype: Claude (Sonnet 5.5), single-file HTML "Albert Nelly prototype"
 - Depends on other parts of this variant? none
 - Weight: under 1 KB JS, 1 KB CSS
 
-### Referral  (`src/variants/three/Referral.tsx`)
-- Looks like: A four-step path whose steps light up as they scroll in, the big "Up to 10%" band, and a small sample group chat. One green "Become a referrer" button.
-- Strengths: uses `OpenButton type="refer"`.
-- Weaknesses / rough edges: the chat bubbles are sample text (Ada, a school portal) and should be replaced with real wording.
-- Needs: optional fields `copy.referral.lead` and `copy.referral.chat` (added to `data/copy.ts`).
-- Depends on other parts of this variant? none
-- Weight: about 1 KB JS, 1 KB CSS
+### Referral  (`src/variants/three/Referral.tsx`, `PhoneChat.tsx`, `PhoneGL.tsx`)
+- Looks like: A four-step path whose steps light up as they scroll in, the big "Up to 10%" band with the green "Become a referrer" button under it, and on the right a WhatsApp group chat on a phone. Six messages arrive one by one with typing dots and "is typing…" under the group name, blue ticks after the first reply and a 🎉 reaction on the last message, then it loops.
+- Strengths:
+  - Three versions from `useMotionMode()`. Full: pop-in bubbles, smooth scroll, and a 3D phone body (three r128) that floats and tilts with the pointer. Light: the same loop with fade-only bubbles and one still 3D render. Still: the finished chat on a flat frame, scrollable by hand (visible scrollbar and a "Scroll up for the start" hint), opening on the last message.
+  - Pause button for visitors (Full and Light). The loop also rests while the phone is off screen.
+  - The chat text is real DOM. The screen is hidden from screen readers and the same text sits in a visually hidden list.
+  - The 3D body reuses the `three-r128` already loaded for the Stage, so no extra download. Without WebGL the flat frame stays.
+  - Turning the phone is one line: `POSE` at the top of `PhoneGL.tsx` (straight by default).
+- Weaknesses / rough edges:
+  - The phone body is built from code (an extruded rounded rectangle and three buttons), not a GLB. A designed model can replace `PhoneGL.tsx` later.
+  - The chat screen is a flat DOM element laid over the 3D body with the same `perspective(900px)` and rotation. It stays glued up to about 0.35 rad (20°) of turn; beyond that the 3D edges and the screen drift apart.
+  - A second WebGL context runs next to the Stage's (only in Full and Light, only after first paint).
+  - In Still the chat scrolls by touch, mouse or trackpad only; keyboard and screen reader users get the hidden list instead.
+  - The WhatsApp look is fixed and ignores the site's theme and Blueprint mode.
+  - Not seen in a real browser yet: typecheck, lint and a production build pass, but the animation, tilt and scroll behaviour need a visual check at 375, 768 and 1280 px in each mode.
+- Needs: `copy.referral.lead` (`data/copy.ts`) and `phoneChat` plus its types (`data/referral.ts`). `three-r128`, `useMotionMode` and `src/lib/motion.ts` (already on main).
+- Depends on other parts of this variant? none (`PhoneChat.tsx`, `PhoneGL.tsx` and their CSS module belong to Referral)
+- Weight: about 3 KB JS and 2 KB CSS (gzip) for the chat, plus about 2.5 KB JS for the 3D body, loaded after first paint
 
 ### Join  (`src/variants/three/Join.tsx`)
 - Looks like: A frosted card at the bottom of the screen with the invitation, one Sunbeam button and the contact lines.

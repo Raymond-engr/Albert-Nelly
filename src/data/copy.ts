@@ -36,13 +36,8 @@ export const copy = {
     band: "Up to 10%",
     bandNote: "Agreed for each project.",
     cta: "Become a referrer",
-    // Optional fields used by variant three: a line under the title and a sample group chat.
+    // Optional field used by variant three: a line under the title. Its sample group chat lives in src/data/referral.ts (phoneChat).
     lead: "Introduce a client. Follow the chat in a WhatsApp group. Earn a share when the deal closes.",
-    chat: [
-      { who: "You", text: "Meet Ada. She needs a school portal.", me: false },
-      { who: "Ada", text: "Hello, we need report cards online.", me: false },
-      { who: "Albert Nelly", text: "Welcome both. Here’s how we’ll work.", me: true },
-    ],
   },
   partners: {
     title: "Our partners.",
