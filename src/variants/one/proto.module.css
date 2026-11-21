@@ -143,3 +143,9 @@
 .t p{margin:1em 0;max-width:none}
 .t .hero .lede{max-width:30em}
 .t .card ol{list-style:decimal}
+/* Motion modes (src/lib/motion.ts): the 3D layer and the flat Still stroke crossfade instead of cutting. */
+.t .gl{transition:opacity .6s ease-out}
+.t .gl.off{opacity:0}
+.t .fb{opacity:0;transition:opacity .6s ease-out}
+.t .fb.on{opacity:1}
+@media(prefers-reduced-motion:reduce){.t .gl,.t .fb{transition:none}}
