@@ -60,13 +60,13 @@ Source prototype: single-file HTML (Claude, Three.js r128 from a CDN, `albert-ne
 - Depends on other parts of this variant? none
 - Weight: under 1 KB.
 
-### Work  (`Work.tsx`, `Work.module.css`)
-- Looks like: Design and Development pill tabs over a grid of framed cards, each with a mint 16:10 tile, a category chip, a title, a challenge, a result and a "Want something like this?" button. The Stage dims while this section is on screen.
-- Strengths: looks right with 4 items; the button opens the form with the project as the chip.
-- Weaknesses / rough edges: placeholder gradient tiles instead of screenshots; no case pages.
-- Needs: nothing.
+### Work  (`Work.tsx`, `Work.module.css`, `WorkFrames.tsx`, `WorkGallery.tsx`, `WorkViewer.tsx`, `WorkCompare.tsx`, `WorkPic.tsx`)
+- Looks like: four pill tabs (Design, Development, Paintings, Photography) that scroll sideways on a phone. Design and Development are framed cards with a mint 16:10 tile: Design shows screens in a phone or laptop frame (swipe or arrows, dots); Development shows a browser frame whose page scrolls (mouse hover in Full mode, or the Preview button) with a phone shot in the corner. Paintings and Photography are a gallery wall that keeps each piece at its own proportions, with a viewer (Enlarge). A piece with two images and `compare` gets a before/after divider (left before, right after), a piece with `stages` gets a stage slider, several `photos` make a set with a count badge, and one image shows plain with no divider. One call-to-action button sits under each gallery and in the viewer. The Stage dims while this section is on screen.
+- Strengths: the divider takes horizontal drags and leaves vertical swipes to the page; tap jumps it; arrow keys work on the handle; one gentle nudge in Full mode only; Still mode has no auto-scroll, nudge, crossfade or transitions; the viewer is a native dialog (Esc, focus kept inside, background inert); no new dependencies.
+- Weaknesses / rough edges: placeholder art (drawn SVG in `public/work/placeholder/`) and CSS-drawn placeholder screens until real images are added; the Preview button overlaps the corner of the browser frame; the viewer needs the buttons or arrow keys to change slide on divider and stage pieces.
+- Needs: new `src/data/gallery.ts`; optional fields on `WorkItem` (`frame`, `screens`, `prototype`, `url`, `shot`, `mobile`) and a `WorkPhoto` and `GalleryItem` type in `src/types/content.ts`; `copy.work.ui` in `src/data/copy.ts`; images in `public/work/`. Shared `WorkCategory` and the admin work type are unchanged, so gallery items are not in the control room yet.
 - Depends on other parts of this variant? none
-- Weight: under 1 KB.
+- Weight: about 18 KB of source, no new packages.
 
 ### Referral  (`Referral.tsx`, `Referral.module.css`)
 - Looks like: A heading, four dashed step cards that turn solid mint with a green border as they pass the upper part of the screen (and dim when scrolled back), then a large "Up to 10%" band and a green "Become a referrer" button.

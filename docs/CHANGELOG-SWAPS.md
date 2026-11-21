@@ -8,3 +8,4 @@ One line per patch: `date | patch | slots | source | deps added`.
 2026-11-19 | 0005-variant-three-drop-width-rule | Stage (three) | none | none
 2026-11-19 | 0006-variant-one-motion-modes | Stage (one) | uses src/lib/motion.ts from 0002 | none
 2026-11-20 | 0006-variant-three-referral-phone-chat | Referral (three) | new: PhoneChat, PhoneGL (reuses three-r128, useMotionMode) | none
+2026-11-21 | 0006-variant-two-work-gallery-and-compare | Work (two) | new: src/data/gallery.ts, WorkFrames/WorkGallery/WorkViewer/WorkCompare/WorkPic in src/variants/two, public/work/placeholder | none

@@ -1,13 +1,102 @@
+/* Selected work, variant two. Four tabs: Design and Development (cards from data/work.ts),
+   Paintings and Photography (gallery from data/gallery.ts). */
 .sec { min-height: 100svh; max-width: 1280px; margin: 0 auto; padding: 96px 5vw; display: flex; flex-direction: column; justify-content: center; }
 .sec h2 { font-size: clamp(28px, 4vw, 40px); margin-bottom: 14px; }
-.tabs { display: flex; gap: 8px; margin-bottom: 14px; }
-.tabs button { min-height: 44px; padding: 0 18px; border: 1.5px solid var(--line); border-radius: 99px; background: color-mix(in srgb, var(--card) 88%, transparent); color: var(--ink); font: 600 15px var(--font-sans); cursor: pointer; }
+/* Still mode: nothing moves on its own anywhere in the section, the viewer included (it renders inside it). */
+.still, .still * { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+
+/* Four pills do not fit one row on a phone, so the row scrolls sideways and fades at the edge. */
+.tabs { display: flex; gap: 8px; margin-bottom: 18px; overflow-x: auto; scrollbar-width: none; mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); }
+.tabs::-webkit-scrollbar { display: none; }
+.tabs button { flex: none; min-height: 44px; padding: 0 18px; border: 1.5px solid var(--line); border-radius: 99px; background: color-mix(in srgb, var(--card) 88%, transparent); color: var(--ink); font: 600 15px var(--font-sans); cursor: pointer; }
 .tabs button[aria-pressed="true"] { border-color: var(--g); background: var(--g); color: #06281e; }
+
 .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
-.card { padding: 22px; border: 1.5px solid color-mix(in srgb, var(--g) 30%, transparent); border-radius: 22px; background: color-mix(in srgb, var(--card) 88%, transparent); backdrop-filter: blur(10px); }
-.card h3 { font-size: 22px; margin-bottom: 6px; }
-.img { aspect-ratio: 16 / 10; margin-bottom: 10px; border-radius: 14px; background: linear-gradient(135deg, var(--mint), #bfe9d3); }
+/* Gallery: columns keep each piece at its own proportions, so a portrait stays a portrait. */
+.gal { columns: 3; column-gap: 16px; }
+.card, .gi { padding: 22px; border: 1.5px solid color-mix(in srgb, var(--g) 30%, transparent); border-radius: 22px; background: color-mix(in srgb, var(--card) 88%, transparent); backdrop-filter: blur(10px); }
+.gi { break-inside: avoid; margin: 0 0 16px; padding: 12px; }
+.cap { padding: 10px 6px 4px; }
+.card h3, .cap h3 { font-size: 22px; margin-bottom: 6px; }
 .chip { display: inline-block; margin-bottom: 8px; padding: 2px 12px; border-radius: 99px; background: var(--mint); font-size: 13px; font-weight: 600; }
 .note { font-size: 14px; opacity: 0.8; }
-.price { font-weight: 600; color: var(--gd); }
-@media (max-width: 800px) { .sec { padding-top: 84px; justify-content: flex-end; } }
+.price { font-weight: 600; color: var(--gd); margin: 6px 0 12px; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; }
+.link { display: inline-flex; align-items: center; min-height: 48px; padding: 0 18px; border: 1.5px solid var(--g); border-radius: 99px; color: var(--gd); font-size: 15px; font-weight: 600; text-decoration: none; }
+.small { margin-top: 8px; min-height: 44px; padding: 0 18px; border: 1.5px solid var(--g); border-radius: 99px; background: none; color: var(--gd); font: 600 15px var(--font-sans); cursor: pointer; }
+.cta { margin-top: 24px; text-align: center; }
+
+/* Design and Development: a mint tile holding a device. */
+.tile { position: relative; aspect-ratio: 16 / 10; margin-bottom: 12px; border-radius: 14px; background: linear-gradient(135deg, var(--mint), #bfe9d3); overflow: hidden; }
+.phone, .laptop, .browser, .mobile { position: absolute; overflow: hidden; background: #fff; border: 3px solid var(--ink); }
+.phone { top: 6%; bottom: 6%; left: 50%; transform: translateX(-50%); aspect-ratio: 9 / 18; border-radius: 16px; }
+.laptop { inset: 9% 12% 14%; border-radius: 10px 10px 0 0; }
+.track { position: absolute; inset: 0; display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
+.track::-webkit-scrollbar { display: none; }
+.slide { position: relative; flex: 0 0 100%; scroll-snap-align: center; }
+.arrow { position: absolute; top: 50%; z-index: 2; width: 44px; height: 44px; transform: translateY(-50%); border: 1.5px solid var(--line); border-radius: 50%; background: var(--card); color: var(--ink); font-size: 22px; cursor: pointer; }
+.prev { left: 6px; }
+.next { right: 6px; }
+.dots { position: absolute; bottom: 5px; left: 0; right: 0; z-index: 2; display: flex; justify-content: center; gap: 6px; }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ink); opacity: 0.25; }
+.dotOn { opacity: 0.9; }
+
+/* Placeholder screens drawn in CSS, shown until a project has real images. Their colours are art, not theme. */
+.mock { height: 100%; padding: 12px; display: flex; flex-direction: column; gap: 8px; background: hsl(var(--h) 60% 96%); }
+.mock b { height: 14px; width: 45%; border-radius: 6px; background: hsl(var(--h) 55% 42%); }
+.mock i { display: block; border-radius: 8px; background: hsl(var(--h) 50% 86%); }
+.mock em { margin-top: auto; height: 26px; border-radius: 99px; background: hsl(var(--h) 55% 42%); }
+.page { background: #fff; color: #222; }
+.page > div, .page > p { margin: 10px 14px; border-radius: 8px; }
+.pgHero { height: 130px; background: linear-gradient(135deg, hsl(var(--h) 60% 45%), hsl(calc(var(--h) + 40) 70% 70%)); }
+.pgRow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.pgRow i { height: 70px; border-radius: 8px; background: hsl(var(--h) 45% 90%); }
+.page > p { height: 9px; background: hsl(var(--h) 20% 85%); }
+.pgBan { height: 110px; background: hsl(var(--h) 55% 38%); }
+.pgFoot { height: 70px; background: #222; }
+
+/* Development: a browser frame whose page scrolls, with a phone shot in the corner. */
+.browser { inset: 9% 6% 6%; border-width: 2px; border-radius: 10px; }
+.bbar { height: 24px; display: flex; align-items: center; gap: 4px; padding: 0 8px; background: var(--mint); border-bottom: 1px solid var(--line); font-size: 11px; color: var(--ink); }
+.bbar i { width: 6px; height: 6px; border-radius: 50%; background: var(--ink); opacity: 0.4; }
+.bbar span { margin-left: 6px; padding: 0 10px; border-radius: 99px; background: var(--card); }
+.view { position: absolute; inset: 24px 0 0; overflow-y: auto; scrollbar-width: thin; }
+.mobile { right: 4%; bottom: 5%; z-index: 2; width: 21%; aspect-ratio: 9 / 18; border-width: 2px; border-radius: 10px; }
+.pv { position: absolute; top: 8px; right: 8px; z-index: 3; min-height: 40px; padding: 0 14px; border: 1.5px solid var(--g); border-radius: 99px; background: var(--card); color: var(--gd); font: 600 13px var(--font-sans); cursor: pointer; }
+
+/* Image frame. --ar is width over height, set from the photo's real size so nothing jumps when it loads. */
+.mv { position: relative; display: block; width: 100%; aspect-ratio: var(--ar); padding: 0; border: 0; border-radius: 12px; overflow: hidden; background: var(--mint); }
+.big { width: min(100%, calc(62vh * var(--ar))); margin: 0 auto; }
+button.mv { cursor: zoom-in; }
+.badge, .label, .hint { position: absolute; z-index: 2; padding: 2px 10px; border-radius: 99px; background: rgba(6, 40, 30, 0.8); color: #fff; font-size: 12px; font-weight: 600; pointer-events: none; }
+.badge { right: 8px; bottom: 8px; }
+.label { bottom: 8px; }
+.labelL { left: 8px; }
+.labelR { right: 8px; }
+.hint { top: 8px; left: 8px; transition: opacity 0.3s; }
+.hintOff { opacity: 0; }
+
+/* The divider. Left is before, right is after. Vertical swipes still scroll the page (pan-y). */
+.cmp { position: absolute; inset: 0; touch-action: pan-y; cursor: ew-resize; user-select: none; }
+.cmp > div { position: absolute; inset: 0; }
+.af { clip-path: inset(0 0 0 var(--p)); }
+.ease .af { transition: clip-path 0.5s ease; }
+.ln { position: absolute; top: 0; bottom: 0; left: var(--p); width: 2px; margin-left: -1px; background: #fff; box-shadow: 0 0 0 1px rgba(6, 40, 30, 0.55); }
+.hd { position: absolute; top: 50%; left: var(--p); z-index: 2; width: 44px; height: 64px; transform: translate(-50%, -50%); border: 0; border-radius: 99px; background: #fff; color: #0a7d4a; font: 700 18px var(--font-sans); box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4); cursor: ew-resize; touch-action: none; }
+.ease .ln, .ease .hd { transition: left 0.5s ease; }
+.sc { padding-top: 8px; }
+.sc input { width: 100%; min-height: 32px; accent-color: var(--g); }
+
+/* Full-size viewer. */
+.viewer { width: min(94vw, 880px); max-height: 94svh; padding: 0; border: 1.5px solid var(--line); border-radius: 22px; background: var(--card); color: var(--ink); overflow: auto; }
+.viewer::backdrop { background: rgba(6, 40, 30, 0.85); }
+.vi { padding: 16px; }
+.vh, .vc { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.vh { margin-bottom: 10px; }
+.vh h3 { font-size: 22px; }
+.vc { flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+.vn { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+.round { width: 44px; height: 44px; border: 1.5px solid var(--line); border-radius: 50%; background: var(--card); color: var(--ink); font-size: 20px; cursor: pointer; }
+
+@media (max-width: 800px) { .sec { padding-top: 84px; justify-content: flex-end; } .gal { columns: 2; } }
+@media (max-width: 520px) { .gal { columns: 1; } }
