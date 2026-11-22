@@ -12,23 +12,19 @@ export default function Referral() {
   const refs = useRef<(HTMLLIElement | null)[]>([]);
   const [lit, setLit] = useState<boolean[]>(() => referralSteps.map(() => false));
 
-  // The four nodes light up in order as the visitor scrolls.
+  // A step lights while it sits in the upper part of the screen and dims again when the visitor scrolls back above it.
   useEffect(() => {
-    const timers: number[] = [];
-    const io = new IntersectionObserver(
-      (entries) =>
-        entries.forEach((e) => {
-          if (!e.isIntersecting) return;
-          const i = Number((e.target as HTMLElement).dataset.i);
-          timers.push(window.setTimeout(() => setLit((a) => a.map((v, k) => (k === i ? true : v))), i * 260));
-          io.unobserve(e.target);
-        }),
-      { threshold: 0.6 },
-    );
-    refs.current.forEach((el) => el && io.observe(el));
+    const on = () => {
+      const next = refs.current.map((el) => !!el && el.getBoundingClientRect().top < innerHeight * 0.72);
+      setLit((prev) => (prev.every((v, i) => v === next[i]) ? prev : next));
+    };
+    const first = requestAnimationFrame(on);
+    addEventListener("scroll", on, { passive: true });
+    addEventListener("resize", on);
     return () => {
-      io.disconnect();
-      timers.forEach(clearTimeout);
+      cancelAnimationFrame(first);
+      removeEventListener("scroll", on);
+      removeEventListener("resize", on);
     };
   }, []);
 
@@ -39,9 +35,9 @@ export default function Referral() {
           <div className="col">
             <h2>{copy.referral.title}</h2>
           </div>
-          <ol className={s.path} style={{ listStyle: "none", padding: 0 }}>
+          <ol className={s.path}>
             {referralSteps.map((st, i) => (
-              <li key={st.title} data-i={i} ref={(el) => { refs.current[i] = el; }} className={`${s.step} ${lit[i] ? s.on : ""}`}>
+              <li key={st.title} ref={(el) => { refs.current[i] = el; }} className={`${s.step} ${lit[i] ? s.on : ""}`}>
                 <h3><b>{i + 1}</b>{st.title}</h3>
                 <p>{st.text}</p>
               </li>
