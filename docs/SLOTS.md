@@ -8,7 +8,7 @@ The Showroom is a list of **slots**. `src/components/showroom/Showroom.tsx` rend
 |---|---|---|---|---|
 | `Nav` | `Nav.tsx` | client | `data/site.ts` | `data-inert-on-modal` on the `<nav>`; a mobile menu; Blueprint toggle (adds class `bp` to `<body>`); an `OpenButton` |
 | `Stage` | `Stage.tsx` + `StageGL.tsx` + `scenes.ts` | client | `useScene()` | fixed background; GLB scenes over a flat poster rig (the Light and Still versions); reads `[data-scene]` sections and, while the Hero's slides are on screen, `[data-stage-slides]`; `aria-hidden`; no content |
-| `Hero` | `Hero.tsx` | server | `data/copy.ts` | `<SceneSection scene="cv">`; one Sunbeam `OpenButton` |
+| `Hero` | `Hero.tsx` | client | `data/copy.ts` | four scroll-driven slides on a tall track; sets `data-stage-slides`, `data-stage-scene` and `data-stage-slide` for the Stage; no 3D of its own; slide 2 shows its ruler and blueprint outlines; one Sunbeam `OpenButton` per slide |
 | `About` | `About.tsx` | server | `data/copy.ts` | `id="about"`; `scene="cv"` |
 | `Services` | `Services.tsx` | client | `data/services.ts` | `id="services"`; one card per service; each card switches the scene (hover and in view); price line may be absent |
 | `Schools` | `Schools.tsx` + `RunningCosts.tsx` | server + client | `data/packages.ts` | `id="schools"`; `scene="sch"`; 3 packages; running costs table, collapsed on phones; AI tooltip |
