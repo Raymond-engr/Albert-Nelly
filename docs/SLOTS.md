@@ -7,7 +7,7 @@ The Showroom is a list of **slots**. `src/components/showroom/Showroom.tsx` rend
 | Slot | Main file (`src/components/showroom/`) | Kind | Reads | Must provide |
 |---|---|---|---|---|
 | `Nav` | `Nav.tsx` | client | `data/site.ts` | `data-inert-on-modal` on the `<nav>`; a mobile menu; Blueprint toggle (adds class `bp` to `<body>`); an `OpenButton` |
-| `Stage` | `Stage.tsx` + `StageArt.tsx` | client | `useScene()` | fixed background; reads `scene` and `dim`; `aria-hidden`; no content |
+| `Stage` | `Stage.tsx` + `StageGL.tsx` + `scenes.ts` | client | `useScene()` | fixed background; GLB scenes over a flat poster rig (the Light and Still versions); reads `[data-scene]` sections and, while the Hero's slides are on screen, `[data-stage-slides]`; `aria-hidden`; no content |
 | `Hero` | `Hero.tsx` | server | `data/copy.ts` | `<SceneSection scene="cv">`; one Sunbeam `OpenButton` |
 | `About` | `About.tsx` | server | `data/copy.ts` | `id="about"`; `scene="cv"` |
 | `Services` | `Services.tsx` | client | `data/services.ts` | `id="services"`; one card per service; each card switches the scene (hover and in view); price line may be absent |
