@@ -8,12 +8,16 @@ import { services } from "@/data/services";
 import { useSceneOnView } from "@/hooks/useSceneOnView";
 import { useScene } from "@/providers/SceneProvider";
 import type { Service } from "@/types/content";
+import type { SceneId } from "@/types/scene";
 import s from "./Services.module.css";
+
+// Same event name as HL_EVENT in ./scenes. The Stage listens for it and lights up the matching 3D object.
+const lightUp = (id: SceneId | null) => window.dispatchEvent(new CustomEvent("albert:hl", { detail: id }));
 
 function ServiceCard({ service, index, active, onActive }: { service: Service; index: number; active: boolean; onActive: () => void }) {
   const { setScene } = useScene();
   // In view (phones) or hovered (desktop): light up the matching 3D object.
-  const ref = useSceneOnView<HTMLElement>(service.scene, { onEnter: onActive });
+  const ref = useSceneOnView<HTMLElement>(service.scene, { onEnter: () => { onActive(); if (matchMedia("(pointer: coarse)").matches) lightUp(service.scene); } });
   return (
     <article
       ref={ref}
@@ -21,7 +25,9 @@ function ServiceCard({ service, index, active, onActive }: { service: Service; i
       onMouseEnter={() => {
         setScene(service.scene);
         onActive();
+        lightUp(service.scene);
       }}
+      onMouseLeave={() => lightUp(null)}
     >
       <i className={`${s.ic} ${s[`ic${index}`]}`} aria-hidden="true" />
       <h3>{service.title}</h3>
@@ -37,7 +43,7 @@ function ServiceCard({ service, index, active, onActive }: { service: Service; i
 export default function Services() {
   const [active, setActive] = useState(-1);
   return (
-    <SceneSection scene="cv" id="services" className="section">
+    <SceneSection scene="wire" path="wire dev shp" id="services" className="section">
       <div className="wrap">
         <div className="col">
           <h2>{copy.services.title}</h2>

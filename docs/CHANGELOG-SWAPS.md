@@ -11,3 +11,4 @@ One line per patch: `date | patch | slots | source | deps added`.
 2026-11-20 | 0006-variant-three-referral-phone-chat | Referral (three) | new: PhoneChat, PhoneGL (reuses three-r128, useMotionMode) | none
 2026-11-21 | 0006-variant-two-work-gallery-and-compare | Work (two) | new: src/data/gallery.ts, WorkFrames/WorkGallery/WorkViewer/WorkCompare/WorkPic in src/variants/two, public/work/placeholder | none
 2026-11-21 | 0006-promote-three-stage-into-main | Stage (main) | new: src/components/showroom/StageGL.tsx, scenes.ts, three-r128.d.ts, public/models/ | StageArt.tsx removed
+2026-11-21 | 0007-services-walks-wire-dev-shapes | Services (main), SceneSection | uses 0006 | none
