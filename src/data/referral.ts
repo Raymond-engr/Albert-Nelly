@@ -2,7 +2,7 @@ export const referralSteps = [
   { title: "Introduce", text: "Tell us who needs a team." },
   { title: "Chat", text: "We add you to a WhatsApp group with your contact." },
   { title: "Deal", text: "You watch the conversation until the deal is agreed." },
-  { title: "Earn", text: "You earn your share when the deal is finalized." },
+  { title: "Earn", text: "You earn your commission when the deal is finalized." },
 ];
 
 export type PhoneMessage = {

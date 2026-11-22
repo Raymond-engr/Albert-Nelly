@@ -61,12 +61,12 @@ export const copy = {
     },
   },
   referral: {
-    title: "Introduce someone. Earn when the deal closes.",
+    title: "Refer someone. Earn when the deal closes.",
     band: "Up to 10%",
     bandNote: "Agreed for each project.",
     cta: "Become a referrer",
     // Optional field used by variant three: a line under the title. Its sample group chat lives in src/data/referral.ts (phoneChat).
-    lead: "Introduce a client. Follow the chat in a WhatsApp group. Earn a share when the deal closes.",
+    lead: "Introduce a client. Follow the chat in a WhatsApp group. Earn a commission when the deal closes.",
   },
   partners: {
     title: "Our partners.",
