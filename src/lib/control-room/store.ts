@@ -68,13 +68,16 @@ function createStore<T>(key: string, init: () => T): Store<T> {
 export const dbStore = createStore<Db>("an-control-room-db-v1", seedDb);
 export const sessionStore = createStore<{ staffId: string | null }>("an-control-room-session-v1", () => ({ staffId: null }));
 
+import { useStaff } from "@/components/control-room/shell/StaffProvider";
+
 export const useDb = (): Db => useSyncExternalStore(dbStore.subscribe, dbStore.get, dbStore.getServer);
 
-/** The signed-in staff member, or null. */
+/** The signed-in staff member, or null. Reads from StaffProvider when available. */
 export function useSession(): Staff | null {
+  const staff = useStaff();
   const s = useSyncExternalStore(sessionStore.subscribe, sessionStore.get, sessionStore.getServer);
   const db = useDb();
-  return db.staff.find((x) => x.id === s.staffId) ?? null;
+  return staff ?? db.staff.find((x) => x.id === s.staffId) ?? null;
 }
 
 const noop = () => () => {};
