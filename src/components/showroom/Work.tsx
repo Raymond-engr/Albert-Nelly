@@ -4,7 +4,7 @@ import { useState } from "react";
 import { SceneSection } from "@/components/shared/SceneSection";
 import { Button } from "@/components/ui/Button";
 import { copy } from "@/data/copy";
-import { work } from "@/data/work";
+import { useSiteContent } from "@/providers/SiteContentProvider";
 import type { WorkCategory } from "@/types/content";
 import s from "./Work.module.css";
 
@@ -12,6 +12,7 @@ const tabs: WorkCategory[] = ["Design", "Development"];
 
 export default function Work() {
   const [tab, setTab] = useState<WorkCategory>("Design");
+  const { work } = useSiteContent();
   return (
     <SceneSection scene="sch" dim id="work" className="section">
       <div className="wrap">

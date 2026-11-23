@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { requireStaff, handle, HttpError } from "@/lib/control-room/server/guard";
 import { rowToWorkItem } from "@/lib/control-room/server/mappers";
 
@@ -31,6 +32,7 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
 
     await supabase.rpc("log_activity", { p_action: "Edited a project", p_target: updated.title });
 
+    revalidatePath("/");
     return rowToWorkItem(updated);
   });
 }
@@ -46,6 +48,7 @@ export async function DELETE(_req: Request, ctx: { params: Promise<{ id: string 
 
     await supabase.rpc("log_activity", { p_action: "Removed a project", p_target: before?.title || "" });
 
+    revalidatePath("/");
     return { ok: true, id };
   });
 }

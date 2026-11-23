@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { PATCH as updateLead } from "@/app/api/control-room/leads/[id]/route";
+import { PATCH as updateService } from "@/app/api/control-room/services/[id]/route";
 import { createJsonRequest } from "../../mocks/request";
 import { createMockSupabase } from "../../mocks/supabase";
 
@@ -7,7 +8,12 @@ vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(),
 }));
 
+vi.mock("next/cache", () => ({
+  revalidatePath: vi.fn(),
+}));
+
 import { createClient } from "@/lib/supabase/server";
+import { revalidatePath } from "next/cache";
 
 describe("Mutation Endpoints: Leads Route", () => {
   beforeEach(() => {
@@ -115,5 +121,45 @@ describe("Mutation Endpoints: Leads Route", () => {
       p_action: "Edited a lead",
       p_target: "Tunde Bakare",
     });
+  });
+
+  it("calls revalidatePath('/') when a public service is updated", async () => {
+    const serviceRow = {
+      id: "svc-1",
+      title: "UI/UX Design",
+      description: "Modern design",
+      audience: "Startups",
+      badge: "",
+      price: { kind: "from", amount: 400000 },
+      published: true,
+    };
+
+    const mockSupabase = createMockSupabase({
+      staff: {
+        id: "owner-1",
+        name: "Owner",
+        email: "owner@albertnelly.com",
+        role: "owner",
+        status: "active",
+      },
+      queryResults: {
+        services: { data: serviceRow, error: null },
+      },
+    });
+
+    const rpcMock = vi.fn().mockResolvedValue({ data: null, error: null });
+    (mockSupabase as unknown as { rpc: unknown }).rpc = rpcMock;
+
+    vi.mocked(createClient).mockResolvedValue(mockSupabase as never);
+
+    const req = createJsonRequest("http://localhost:3000/api/control-room/services/svc-1", {
+      title: "UI/UX Design Updated",
+    });
+    const ctx = { params: Promise.resolve({ id: "svc-1" }) };
+
+    const response = await updateService(req, ctx);
+    expect(response.status).toBe(200);
+
+    expect(revalidatePath).toHaveBeenCalledWith("/");
   });
 });

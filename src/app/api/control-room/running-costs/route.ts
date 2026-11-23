@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { requireStaff, handle, HttpError } from "@/lib/control-room/server/guard";
 import { rowToRunningCost } from "@/lib/control-room/server/mappers";
 import type { RunningCost } from "@/lib/control-room/types";
@@ -35,10 +36,12 @@ export async function PUT(req: Request) {
 
       if (error) throw new HttpError(400, error.message);
       await supabase.rpc("log_activity", { p_action: "Updated the yearly running costs", p_target: "" });
+      revalidatePath("/");
       return (inserted || []).map(rowToRunningCost);
     }
 
     await supabase.rpc("log_activity", { p_action: "Updated the yearly running costs", p_target: "" });
+    revalidatePath("/");
     return [];
   });
 }

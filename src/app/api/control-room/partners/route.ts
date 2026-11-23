@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { requireStaff, handle, HttpError } from "@/lib/control-room/server/guard";
 import { rowToPartner } from "@/lib/control-room/server/mappers";
 
@@ -42,6 +43,7 @@ export async function POST(req: Request) {
 
     await supabase.rpc("log_activity", { p_action: "Added a partner", p_target: created.name });
 
+    revalidatePath("/");
     return rowToPartner(created);
   });
 }

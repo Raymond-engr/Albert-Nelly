@@ -1,10 +1,13 @@
+"use client";
+
 import { OpenButton } from "@/components/shared/OpenButton";
 import { SceneSection } from "@/components/shared/SceneSection";
 import { copy } from "@/data/copy";
-import { partnerTiles } from "@/data/referral";
+import { useSiteContent } from "@/providers/SiteContentProvider";
 import s from "./Partners.module.css";
 
 export default function Partners() {
+  const { partnerTiles } = useSiteContent();
   return (
     <SceneSection scene="net" id="partners" className="section">
       <div className="wrap">

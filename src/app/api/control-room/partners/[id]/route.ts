@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { requireStaff, handle, HttpError } from "@/lib/control-room/server/guard";
 import { rowToPartner } from "@/lib/control-room/server/mappers";
 
@@ -38,6 +39,7 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
 
     await supabase.rpc("log_activity", { p_action: "Edited a partner", p_target: updated.name });
 
+    revalidatePath("/");
     return rowToPartner(updated);
   });
 }
@@ -53,6 +55,7 @@ export async function DELETE(_req: Request, ctx: { params: Promise<{ id: string 
 
     await supabase.rpc("log_activity", { p_action: "Removed a partner", p_target: before?.name || "" });
 
+    revalidatePath("/");
     return { ok: true, id };
   });
 }

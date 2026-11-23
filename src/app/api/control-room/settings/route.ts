@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { requireStaff, handle, HttpError } from "@/lib/control-room/server/guard";
 import { rowToSettings } from "@/lib/control-room/server/mappers";
 
@@ -29,6 +30,7 @@ export async function PATCH(req: Request) {
 
     await supabase.rpc("log_activity", { p_action: "Changed the settings", p_target: "" });
 
+    revalidatePath("/");
     return rowToSettings(updated);
   });
 }

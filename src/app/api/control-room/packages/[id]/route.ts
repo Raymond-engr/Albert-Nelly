@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { requireStaff, handle, HttpError } from "@/lib/control-room/server/guard";
 import { rowToPackage } from "@/lib/control-room/server/mappers";
 
@@ -39,6 +40,7 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
 
     await supabase.rpc("log_activity", { p_action: "Edited a school package", p_target: updated.name });
 
+    revalidatePath("/");
     return rowToPackage(updated);
   });
 }

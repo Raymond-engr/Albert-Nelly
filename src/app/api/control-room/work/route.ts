@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { requireStaff, handle, HttpError } from "@/lib/control-room/server/guard";
 import { rowToWorkItem } from "@/lib/control-room/server/mappers";
 
@@ -40,6 +41,7 @@ export async function POST(req: Request) {
 
     await supabase.rpc("log_activity", { p_action: "Added a project to Selected work", p_target: created.title });
 
+    revalidatePath("/");
     return rowToWorkItem(created);
   });
 }

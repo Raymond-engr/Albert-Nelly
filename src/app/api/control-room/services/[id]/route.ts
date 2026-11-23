@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { requireStaff, handle, HttpError } from "@/lib/control-room/server/guard";
 import { rowToService } from "@/lib/control-room/server/mappers";
 
@@ -39,6 +40,7 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
     const action = priceChanged ? "Changed the price display" : "Edited a service";
     await supabase.rpc("log_activity", { p_action: action, p_target: updated.title });
 
+    revalidatePath("/");
     return rowToService(updated);
   });
 }
