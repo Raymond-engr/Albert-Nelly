@@ -3,6 +3,10 @@ import { createClient } from "@/lib/supabase/server";
 import { can, type Area } from "@/lib/control-room/roles";
 import type { Staff } from "@/lib/control-room/types";
 
+/** Throttle map: staff id → timestamp of last last_seen_at write (ms since epoch). */
+const seenAt = new Map<string, number>();
+const SEEN_THROTTLE_MS = 5 * 60 * 1000; // 5 minutes
+
 export class HttpError extends Error {
   constructor(
     public status: number,
@@ -42,6 +46,23 @@ export async function requireStaff(area: Area, need: "view" | "edit" = "view") {
 
   if (!can(staff.role, area, need)) {
     throw new HttpError(403, "Your role can’t do this.");
+  }
+
+  // Passive presence: update last_seen_at at most once per 5 minutes per staff member.
+  const now = Date.now();
+  const last = seenAt.get(staff.id) ?? 0;
+  if (now - last > SEEN_THROTTLE_MS) {
+    seenAt.set(staff.id, now);
+    void Promise.resolve(
+      supabase
+        .from("staff")
+        .update({ last_seen_at: new Date(now).toISOString() })
+        .eq("id", staff.id)
+    ).then(({ error }) => {
+      if (error) console.error("[presence]", error.message);
+    }).catch((err: unknown) => {
+      console.error("[presence]", err);
+    });
   }
 
   return { supabase, staff: staff as Staff, user };

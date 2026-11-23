@@ -1,15 +1,18 @@
 import { createClient } from "@/lib/supabase/client";
 import { dbStore, sessionStore } from "./store";
 import { toast } from "./toast";
-import type { Activity, Role, Staff } from "./types";
+import type { Role, Staff } from "./types";
 
 let seq = 0;
 export const uid = (prefix: string) => `${prefix}_${Date.now().toString(36)}${(seq++).toString(36)}`;
 
-export function logActivity(action: string, target = "") {
-  const actorId = sessionStore.get().staffId ?? "unknown";
-  const entry: Activity = { id: uid("act"), at: new Date().toISOString(), actorId, action, target };
-  dbStore.set((db) => ({ ...db, activity: [entry, ...db.activity].slice(0, 200) }));
+/**
+ * No-op: activity is now logged server-side by route handlers via the
+ * `log_activity` RPC. This stub exists so existing call sites compile.
+ */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function logActivity(_action: string, _target = "") {
+  // Server-side only. See src/lib/control-room/server/log-activity.ts
 }
 
 export const auth = {

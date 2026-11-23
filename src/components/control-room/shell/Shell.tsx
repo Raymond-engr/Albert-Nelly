@@ -9,6 +9,7 @@ import { useHydrated, useSession, useDbStatus, useDbRefresh } from "@/lib/contro
 import { ApiError } from "@/lib/control-room/http";
 import { toast } from "@/lib/control-room/toast";
 import type { Staff } from "@/lib/control-room/types";
+import { createClient } from "@/lib/supabase/client";
 import { Brand } from "../ui/Brand";
 import { Icon } from "../ui/Icon";
 import { Avatar, btn, EmptyState } from "../ui/kit";
@@ -94,6 +95,28 @@ export function Shell({ children }: { children: ReactNode }) {
     window.addEventListener("unhandledrejection", onUnhandledRejection);
     return () => {
       window.removeEventListener("unhandledrejection", onUnhandledRejection);
+    };
+  }, [refresh]);
+
+  // Realtime: subscribe to new lead insertions.
+  // The Shell only renders after the (app)/layout.tsx guard confirms an aal2 session,
+  // so the subscription is always authenticated.
+  useEffect(() => {
+    const supabase = createClient();
+    const channel = supabase
+      .channel("leads-realtime")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "leads" },
+        (payload) => {
+          const lead = payload.new as { name?: string; service?: string };
+          toast(`New lead: ${lead.name ?? "someone"} — ${lead.service ?? ""}`, "ok");
+          void refresh();
+        }
+      )
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(channel);
     };
   }, [refresh]);
 
