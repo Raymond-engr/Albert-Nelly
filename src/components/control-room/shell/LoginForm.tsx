@@ -109,9 +109,8 @@ export function LoginForm() {
           setLoading(false);
           return;
         }
-        // Session is now aal2 — full document navigation ensures all cookies are committed
-        // and Next.js router cache/prefetch is bypassed.
-        window.location.replace("/control-room");
+        // Session is now aal2 — navigate directly
+        router.replace("/control-room");
         return;
       }
     } catch {

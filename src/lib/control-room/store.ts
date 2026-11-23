@@ -97,6 +97,7 @@ type StatusState = {
 };
 
 let statusState: StatusState = { status: "loading", error: null };
+const SERVER_STATUS: StatusState = { status: "loading", error: null };
 const statusListeners = new Set<() => void>();
 const emitStatus = () => statusListeners.forEach((l) => l());
 
@@ -109,7 +110,7 @@ export function useDbStatus(): StatusState {
       };
     },
     () => statusState,
-    () => ({ status: "loading", error: null })
+    () => SERVER_STATUS
   );
 }
 
