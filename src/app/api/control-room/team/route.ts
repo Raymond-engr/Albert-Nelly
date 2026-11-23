@@ -1,6 +1,7 @@
 import { requireStaff, handle, HttpError } from "@/lib/control-room/server/guard";
 import { getAdminClient } from "@/lib/supabase/admin";
 import type { Role } from "@/lib/control-room/types";
+import { logger } from "@/lib/logger";
 
 export async function POST(req: Request) {
   return handle(async () => {
@@ -50,7 +51,7 @@ export async function POST(req: Request) {
     );
 
     if (inviteError || !inviteData?.user) {
-      console.error("[teamApi.invite]", inviteError);
+      logger.error("[teamApi.invite]", { error: inviteError });
       throw new HttpError(500, inviteError?.message ?? "Failed to send invitation.");
     }
 
@@ -65,7 +66,7 @@ export async function POST(req: Request) {
 
     const { error: insertError } = await admin.from("staff").insert(newStaff);
     if (insertError) {
-      console.error("[teamApi.insert]", insertError);
+      logger.error("[teamApi.insert]", { error: insertError });
       throw new HttpError(500, "Failed to record invited staff member.");
     }
 

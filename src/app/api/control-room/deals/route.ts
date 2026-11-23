@@ -1,5 +1,6 @@
 import { requireStaff, handle, HttpError } from "@/lib/control-room/server/guard";
 import { rowToDeal, shouldRedactCommission } from "@/lib/control-room/server/mappers";
+import { logger } from "@/lib/logger";
 
 export async function POST(req: Request) {
   return handle(async () => {
@@ -49,7 +50,7 @@ export async function POST(req: Request) {
     const { data: created, error } = await supabase.from("deals").insert(newDeal).select("*").single();
 
     if (error || !created) {
-      console.error("[deals.create]", error);
+      logger.error("[deals.create]", { error });
       throw new HttpError(400, error?.message || "Failed to create deal.");
     }
 

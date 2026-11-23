@@ -1,6 +1,7 @@
 import { requireStaff, handle, HttpError } from "@/lib/control-room/server/guard";
 import { rowToPayment } from "@/lib/control-room/server/mappers";
 import type { PaymentCategory } from "@/lib/control-room/types";
+import { logger } from "@/lib/logger";
 
 export async function POST(req: Request, ctx: { params: Promise<{ id: string }> }) {
   return handle(async () => {
@@ -51,7 +52,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
     });
 
     if (rpcError || !paymentId) {
-      console.error("[payments.record]", rpcError);
+      logger.error("[payments.record]", { error: rpcError });
       throw new HttpError(400, rpcError?.message || "Failed to record payment.");
     }
 

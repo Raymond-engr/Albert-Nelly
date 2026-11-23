@@ -3,6 +3,7 @@ import { getAdminClient } from "@/lib/supabase/admin";
 import { getUnsubscribeUrl } from "@/lib/unsubscribe";
 import { renderCampaignEmail, renderWelcomeEmail, renderBirthdayEmail } from "@/emails";
 import { sendBatch, type BatchEmailItem } from "@/lib/email";
+import { logger } from "@/lib/logger";
 
 function isAuthorized(req: Request): boolean {
   const secret = process.env.CRON_SECRET;
@@ -73,7 +74,7 @@ async function handleCron(req: Request) {
       .is("unsubscribed_at", null);
 
     if (leadsErr) {
-      console.error(`[cron] Could not fetch leads for campaign ${id}:`, leadsErr);
+      logger.error(`[cron] Could not fetch leads for campaign ${id}:`, { error: leadsErr });
       continue;
     }
 

@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { handle, HttpError } from "@/lib/control-room/server/guard";
+import { logger } from "@/lib/logger";
 
 export async function POST() {
   return handle(async () => {
@@ -29,7 +30,7 @@ export async function POST() {
       .eq("id", user.id);
 
     if (updateError) {
-      console.error("[activate]", updateError);
+      logger.error("[activate]", { error: updateError });
       throw new HttpError(500, "Failed to activate staff account.");
     }
 

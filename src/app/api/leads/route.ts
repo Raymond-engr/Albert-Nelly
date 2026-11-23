@@ -4,10 +4,22 @@ import { getAdminClient } from "@/lib/supabase/admin";
 import { getUnsubscribeUrl } from "@/lib/unsubscribe";
 import { renderWelcomeEmail } from "@/emails";
 import { sendEmail } from "@/lib/email";
+import { checkRateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 const fail = (error: string, status: number) => NextResponse.json({ ok: false, error }, { status });
 
 export async function POST(req: Request) {
+  // Rate limiting: keyed by IP from x-forwarded-for (Vercel sets this).
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "anonymous";
+  const { ok: withinLimit, retryAfterSec } = checkRateLimit(ip);
+  if (!withinLimit) {
+    return NextResponse.json(
+      { ok: false, error: "Too many requests. Please try again later." },
+      { status: 429, headers: { "Retry-After": String(retryAfterSec) } }
+    );
+  }
+
   let body: unknown;
   try {
     body = await req.json();
@@ -69,7 +81,7 @@ export async function POST(req: Request) {
           unsubscribeUrl,
         });
       } catch (err) {
-        console.error("[leads] Failed to send welcome email:", err);
+        logger.error("[leads] Failed to send welcome email:", { err: String(err) });
       }
     });
   }

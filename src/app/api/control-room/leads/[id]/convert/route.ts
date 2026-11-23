@@ -1,5 +1,6 @@
 import { requireStaff, handle, HttpError } from "@/lib/control-room/server/guard";
 import { rowToDeal } from "@/lib/control-room/server/mappers";
+import { logger } from "@/lib/logger";
 
 export async function POST(req: Request, ctx: { params: Promise<{ id: string }> }) {
   return handle(async () => {
@@ -36,7 +37,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
     });
 
     if (rpcError || !dealId) {
-      console.error("[leads.convert]", rpcError);
+      logger.error("[leads.convert]", { error: rpcError });
       throw new HttpError(400, rpcError?.message || "Failed to convert lead to deal.");
     }
 

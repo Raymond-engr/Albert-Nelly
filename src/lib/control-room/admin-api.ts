@@ -25,6 +25,15 @@ export const teamApi = {
       return false;
     }
   },
+  async offboard(id: string): Promise<boolean> {
+    try {
+      await call("PATCH", `/api/control-room/team/${id}/offboard`);
+      await refreshDb();
+      return true;
+    } catch {
+      return false;
+    }
+  },
 };
 
 export const settingsApi = {
