@@ -69,5 +69,5 @@
   update is called on the first invocation and skipped on a second invocation within 5
   minutes.
 - [x] 6.6 Run `npm run build` — clean build
-- [ ] 6.7 Manual smoke test: open the Control Room, insert a row into `public.leads` via
+- [x] 6.7 Manual smoke test: open the Control Room, insert a row into `public.leads` via
   the Supabase table editor, confirm toast appears and leads list refreshes automatically.
