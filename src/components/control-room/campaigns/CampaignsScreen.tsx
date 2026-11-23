@@ -14,9 +14,9 @@ import { Badge, btn, Card, EmptyState, PageHeader, type Tone } from "../ui/kit";
 import { Segmented } from "../ui/Segmented";
 
 type Filter = "all" | Campaign["status"];
-const TONE: Record<Campaign["status"], Tone> = { draft: "neutral", scheduled: "sun", sent: "green", automated: "dark" };
-const LABEL: Record<Campaign["status"], string> = { draft: "Draft", scheduled: "Scheduled", sent: "Sent", automated: "Automatic" };
-const RANK: Record<Campaign["status"], number> = { scheduled: 0, draft: 1, sent: 2, automated: 3 };
+const TONE: Record<Campaign["status"], Tone> = { draft: "neutral", scheduled: "sun", sending: "sun", sent: "green", automated: "dark" };
+const LABEL: Record<Campaign["status"], string> = { draft: "Draft", scheduled: "Scheduled", sending: "Sending…", sent: "Sent", automated: "Automatic" };
+const RANK: Record<Campaign["status"], number> = { sending: 0, scheduled: 1, draft: 2, sent: 3, automated: 4 };
 const pct = (n: number, of: number) => (of ? `${Math.round((n / of) * 100)}%` : "0%");
 
 /**
