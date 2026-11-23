@@ -14,30 +14,22 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       data: { user },
     } = await supabase.auth.getUser();
 
-    console.log("[AppLayout] user:", user?.id);
-
     if (!user) {
-      console.log("[AppLayout] redirecting: no user");
       redirect("/control-room/login");
     }
 
     const aal = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-    console.log("[AppLayout] aal:", aal.data?.currentLevel);
     if (aal.data?.currentLevel !== "aal2") {
-      console.log("[AppLayout] redirecting: aal not aal2, got:", aal.data?.currentLevel);
       redirect("/control-room/login");
     }
 
-    const { data: staffRow, error: staffErr } = await supabase
+    const { data: staffRow } = await supabase
       .from("staff")
       .select("id,name,email,role,status,last_seen_at")
       .eq("id", user.id)
       .single();
 
-    console.log("[AppLayout] staffRow:", staffRow, "staffErr:", staffErr);
-
     if (!staffRow || staffRow.status !== "active") {
-      console.log("[AppLayout] redirecting: staff not active or null");
       redirect("/control-room/login");
     }
 

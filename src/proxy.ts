@@ -35,7 +35,6 @@ export async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const pathname = request.nextUrl.pathname;
-  console.log(`[proxy] path: ${pathname}, user: ${user?.id ?? "none"}`);
 
   const isAuthPage =
     pathname === "/control-room/login" ||
