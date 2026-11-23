@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { auth } from "@/lib/control-room/api";
 import { areaForPath, can, NAV, roleLabel } from "@/lib/control-room/roles";
-import { useHydrated, useSession } from "@/lib/control-room/store";
+import { useHydrated, useSession, useDbStatus, useDbRefresh } from "@/lib/control-room/store";
 import type { Staff } from "@/lib/control-room/types";
 import { Brand } from "../ui/Brand";
 import { Icon } from "../ui/Icon";
@@ -67,6 +67,15 @@ export function Shell({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [menu, setMenu] = useState(false);
+  const { status, error } = useDbStatus();
+  const refresh = useDbRefresh();
+
+  // Load snapshot data once staff session is confirmed
+  useEffect(() => {
+    if (hydrated && staff) {
+      void refresh();
+    }
+  }, [hydrated, staff, refresh]);
 
   // TODO(integration): the server checks the session (proxy.ts + a layout check) before anything is sent.
   useEffect(() => {
@@ -112,10 +121,31 @@ export function Shell({ children }: { children: ReactNode }) {
           <Avatar name={staff.name} size={32} />
         </div>
         <main id="cr-main" className="mx-auto w-full max-w-[1200px] flex-1 px-4 py-6 sm:px-8 sm:py-8">
-          {allowed ? children : (
+          {!allowed ? (
             <EmptyState icon="shield" title="This screen isn’t available to your role" action={<Link href="/control-room" className={btn("outline")}>Back to the overview</Link>}>
               Ask an Owner if you need access to this area.
             </EmptyState>
+          ) : status === "loading" ? (
+            <div className="flex flex-col items-center justify-center py-24 text-center">
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-mint border-t-deep" />
+              <p className="mt-4 text-sm font-medium text-ink/70">Syncing Control Room data…</p>
+            </div>
+          ) : status === "error" ? (
+            <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center text-red-900 dark:border-red-900/40 dark:bg-red-950/20 dark:text-red-200">
+              <h3 className="text-base font-semibold">Unable to load Control Room snapshot</h3>
+              <p className="mt-1 text-sm text-red-700 dark:text-red-300">{error || "A connection or network error occurred."}</p>
+              <div className="mt-4 flex justify-center">
+                <button
+                  type="button"
+                  className={btn("brand", "sm")}
+                  onClick={() => void refresh()}
+                >
+                  Retry
+                </button>
+              </div>
+            </div>
+          ) : (
+            children
           )}
         </main>
       </div>
