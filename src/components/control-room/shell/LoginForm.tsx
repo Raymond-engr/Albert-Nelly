@@ -109,7 +109,7 @@ export function LoginForm() {
           setLoading(false);
           return;
         }
-        await auth.signIn(email.trim(), password);
+        // Session is now aal2 — navigate directly, no second signIn needed
         router.replace("/control-room");
         return;
       }
