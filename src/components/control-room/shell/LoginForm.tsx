@@ -100,17 +100,20 @@ export function LoginForm() {
     try {
       const supabase = createClient();
       if (factorId) {
-        const { error: verifyError } = await supabase.auth.mfa.challengeAndVerify({
+        const res = await supabase.auth.mfa.challengeAndVerify({
           factorId,
           code,
         });
-        if (verifyError) {
-          setError(verifyError.message || "Invalid 6-digit code. Please try again.");
+        console.log("[LoginForm] challengeAndVerify res:", res);
+        if (res.error) {
+          setError(res.error.message || "Invalid 6-digit code. Please try again.");
           setLoading(false);
           return;
         }
-        // Session is now aal2 — navigate directly, no second signIn needed
-        router.replace("/control-room");
+        // Session is now aal2 — full document navigation ensures all cookies are committed
+        // and Next.js router cache/prefetch is bypassed.
+        console.log("[LoginForm] navigating to /control-room");
+        window.location.replace("/control-room");
         return;
       }
     } catch {

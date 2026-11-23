@@ -122,6 +122,7 @@ export function Shell({ children }: { children: ReactNode }) {
 
   // TODO(integration): the server checks the session (proxy.ts + a layout check) before anything is sent.
   useEffect(() => {
+    console.log("[Shell effect] hydrated:", hydrated, "staff:", staff);
     if (hydrated && !staff) router.replace("/control-room/login");
   }, [hydrated, staff, router]);
 
