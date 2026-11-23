@@ -159,6 +159,7 @@ export function rowToWorkItem(row: Record<string, unknown>): WorkItem {
     challenge: String(row.challenge || ""),
     result: String(row.result || ""),
     published: Boolean(row.published),
+    imagePath: row.image_path ? String(row.image_path) : null,
   };
 }
 
@@ -171,6 +172,7 @@ export function rowToPartner(row: Record<string, unknown>): Partner {
     link: String(row.link || ""),
     status: (row.status || "pending") as "active" | "pending",
     published: Boolean(row.published),
+    logoPath: row.logo_path ? String(row.logo_path) : null,
   };
 }
 

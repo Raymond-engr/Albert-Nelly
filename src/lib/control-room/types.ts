@@ -117,9 +117,11 @@ export type PackageTier = {
 export type RunningCost = { id: string; item: string; amount: number };
 export type WorkItem = {
   id: string; category: "Design" | "Development"; title: string; challenge: string; result: string; published: boolean;
+  imagePath?: string | null;
 };
 export type Partner = {
   id: string; name: string; category: string; note: string; link: string; status: "active" | "pending"; published: boolean;
+  logoPath?: string | null;
 };
 export type Referrer = {
   id: string; name: string; email: string; whatsapp: string; rate: number; status: "active" | "paused"; joinedAt: string;

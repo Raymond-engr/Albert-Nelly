@@ -118,13 +118,21 @@ export async function getSiteContent(): Promise<SiteContent> {
         title: String(row.title || ""),
         challenge: String(row.challenge || ""),
         result: String(row.result || ""),
+        imagePath: row.image_path ? String(row.image_path) : null,
       }));
     }
 
     // Partners
     let partnerTiles = defaultSiteContent.partnerTiles;
+    const partnerLogos: Record<string, string> = {};
     if (partnersRes.data && partnersRes.data.length > 0) {
-      partnerTiles = partnersRes.data.map((row) => String(row.name || ""));
+      partnerTiles = partnersRes.data.map((row) => {
+        const name = String(row.name || "");
+        if (row.logo_path) {
+          partnerLogos[name] = String(row.logo_path);
+        }
+        return name;
+      });
     }
 
     // WhatsApp Number
@@ -142,6 +150,7 @@ export async function getSiteContent(): Promise<SiteContent> {
       runningCosts,
       work,
       partnerTiles,
+      partnerLogos,
       whatsappNumber,
     };
   } catch (err) {

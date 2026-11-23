@@ -11,6 +11,7 @@ export type SiteContent = {
   runningCosts: { item: string; amount: string }[];
   work: WorkItem[];
   partnerTiles: string[];
+  partnerLogos?: Record<string, string>;
   whatsappNumber: string;
 };
 

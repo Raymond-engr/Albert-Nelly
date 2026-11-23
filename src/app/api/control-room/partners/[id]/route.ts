@@ -21,6 +21,7 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
     if (typeof body.link === "string") updates.link = body.link.trim();
     if (body.status === "active" || body.status === "pending") updates.status = body.status;
     if (body.published !== undefined) updates.published = Boolean(body.published);
+    if (body.logoPath !== undefined) updates.logo_path = body.logoPath ? String(body.logoPath) : null;
 
     const { data: current } = await supabase.from("partners").select("status").eq("id", id).single();
     const effectiveStatus = updates.status || current?.status;

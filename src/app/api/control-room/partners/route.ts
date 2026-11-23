@@ -6,14 +6,14 @@ export async function POST(req: Request) {
   return handle(async () => {
     const { supabase } = await requireStaff("partners", "edit");
 
-    let body: { name?: string; category?: string; note?: string; link?: string; status?: "active" | "pending"; published?: boolean };
+    let body: { name?: string; category?: string; note?: string; link?: string; status?: "active" | "pending"; published?: boolean; logoPath?: string | null };
     try {
       body = await req.json();
     } catch {
       throw new HttpError(400, "Invalid JSON payload.");
     }
 
-    const { name, category, note = "", link = "", status = "pending", published = false } = body;
+    const { name, category, note = "", link = "", status = "pending", published = false, logoPath } = body;
     if (!name || name.trim().length < 2) throw new HttpError(422, "Partner name is required.");
     if (!category || category.trim().length < 2) throw new HttpError(422, "Category is required.");
 
@@ -35,6 +35,7 @@ export async function POST(req: Request) {
         link: link.trim(),
         status,
         published: Boolean(published),
+        logo_path: logoPath ? String(logoPath) : null,
       })
       .select("*")
       .single();

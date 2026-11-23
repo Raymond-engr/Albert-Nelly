@@ -20,6 +20,7 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
     if (typeof body.result === "string") updates.result = body.result.trim();
     if (body.category === "Design" || body.category === "Development") updates.category = body.category;
     if (body.published !== undefined) updates.published = Boolean(body.published);
+    if (body.imagePath !== undefined) updates.image_path = body.imagePath ? String(body.imagePath) : null;
 
     const { data: updated, error } = await supabase
       .from("work_items")
