@@ -1,26 +1,18 @@
-import { logActivity } from "./api";
-import { dealsApi, type NewDealInput } from "./deals-api";
-import { dbStore } from "./store";
+import { call } from "./http";
+import { refreshDb } from "./store";
 import type { Deal, Lead } from "./types";
+import type { NewDealInput } from "./deals-api";
 
-/**
- * Writes for leads.
- * TODO(integration):
- *   update        -> PATCH /api/control-room/leads/:id
- *   convertToDeal -> POST  /api/control-room/leads/:id/deal   (one transaction: insert the deal, set lead.status = 'deal')
- */
-export type LeadPatch = Partial<Pick<Lead, "status" | "notes" | "tags" | "ownerId">>;
+export type LeadPatch = Partial<Pick<Lead, "status" | "notes" | "tags" | "ownerId">> & { updatedAt?: string };
 
 export const leadsApi = {
   async update(id: string, patch: LeadPatch): Promise<void> {
-    dbStore.set((db) => ({ ...db, leads: db.leads.map((l) => (l.id === id ? { ...l, ...patch } : l)) }));
-    const lead = dbStore.get().leads.find((l) => l.id === id);
-    logActivity(patch.status === "archived" ? "Archived a lead" : "Edited a lead", lead?.name ?? "");
+    await call("PATCH", `/api/control-room/leads/${id}`, patch);
+    await refreshDb();
   },
   async convertToDeal(leadId: string, input: Omit<NewDealInput, "leadId">): Promise<Deal> {
-    const deal = await dealsApi.create({ ...input, leadId }, false);
-    dbStore.set((db) => ({ ...db, leads: db.leads.map((l) => (l.id === leadId ? { ...l, status: "deal", dealId: deal.id } : l)) }));
-    logActivity("Turned a lead into a deal", input.client);
+    const deal = await call<Deal>("POST", `/api/control-room/leads/${leadId}/convert`, input);
+    await refreshDb();
     return deal;
   },
 };

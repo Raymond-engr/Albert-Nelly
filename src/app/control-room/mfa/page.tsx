@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import { Brand } from "@/components/control-room/ui/Brand";
@@ -102,7 +101,8 @@ export default function MfaEnrollmentPage() {
             <form onSubmit={verifyCode} className="flex flex-col gap-4">
               {qrCode && (
                 <div className="flex justify-center rounded-2xl bg-white p-4 shadow-xs">
-                  <Image src={qrCode} alt="TOTP QR Code" width={180} height={180} unoptimized />
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={qrCode} alt="TOTP QR Code" width={180} height={180} className="h-[180px] w-[180px]" />
                 </div>
               )}
 

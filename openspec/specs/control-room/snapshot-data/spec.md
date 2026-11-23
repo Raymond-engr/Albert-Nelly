@@ -37,3 +37,7 @@ The system SHALL hydrate the client store from the server snapshot upon mounting
 #### Scenario: Snapshot retrieval failure
 - **WHEN** a snapshot request fails due to a network interruption or server error
 - **THEN** the client shell transitions to an error state and renders a retry action
+
+#### Scenario: Post-mutation store re-synchronization
+- **WHEN** any seam mutation completes successfully on the server
+- **THEN** the client store automatically executes `refreshDb()` to reflect updated database records across all screens

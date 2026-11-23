@@ -30,12 +30,15 @@ function NewDealForm({ lead, onClose, onCreated }: { lead: Lead | null; onClose:
     setErrors(next);
     if (Object.keys(next).length || price === null) return;
     setSaving(true);
-    const input = { title: title.trim(), client: client.trim(), service, agreed: price };
-    const deal = lead ? await leadsApi.convertToDeal(lead.id, input) : await dealsApi.create(input);
-    setSaving(false);
-    toast("Deal created.");
-    onCreated?.(deal);
-    onClose();
+    try {
+      const input = { title: title.trim(), client: client.trim(), service, agreed: price };
+      const deal = lead ? await leadsApi.convertToDeal(lead.id, input) : await dealsApi.create(input);
+      toast("Deal created.");
+      onCreated?.(deal);
+      onClose();
+    } finally {
+      setSaving(false);
+    }
   };
 
   const services = db.services.some((s) => s.title === service) ? db.services.map((s) => s.title) : [service, ...db.services.map((s) => s.title)];

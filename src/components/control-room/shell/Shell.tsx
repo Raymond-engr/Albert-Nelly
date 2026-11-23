@@ -6,6 +6,8 @@ import { useEffect, useState, type ReactNode } from "react";
 import { auth } from "@/lib/control-room/api";
 import { areaForPath, can, NAV, roleLabel } from "@/lib/control-room/roles";
 import { useHydrated, useSession, useDbStatus, useDbRefresh } from "@/lib/control-room/store";
+import { ApiError } from "@/lib/control-room/http";
+import { toast } from "@/lib/control-room/toast";
 import type { Staff } from "@/lib/control-room/types";
 import { Brand } from "../ui/Brand";
 import { Icon } from "../ui/Icon";
@@ -76,6 +78,24 @@ export function Shell({ children }: { children: ReactNode }) {
       void refresh();
     }
   }, [hydrated, staff, refresh]);
+
+  // Handle unhandled ApiErrors with global toast notification
+  useEffect(() => {
+    const onUnhandledRejection = (e: PromiseRejectionEvent) => {
+      const reason = e.reason;
+      if (reason instanceof ApiError) {
+        e.preventDefault();
+        toast(reason.message, "error");
+        if (reason.status === 409) {
+          void refresh();
+        }
+      }
+    };
+    window.addEventListener("unhandledrejection", onUnhandledRejection);
+    return () => {
+      window.removeEventListener("unhandledrejection", onUnhandledRejection);
+    };
+  }, [refresh]);
 
   // TODO(integration): the server checks the session (proxy.ts + a layout check) before anything is sent.
   useEffect(() => {
