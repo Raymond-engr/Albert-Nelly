@@ -69,7 +69,7 @@ export async function getSiteContent(): Promise<SiteContent> {
         ) as PriceDisplay;
         const priceStr = formatPrice(pObj);
         return {
-          scene: (row.scene || "web") as SceneId,
+          scene: (row.scene || "dev") as SceneId,
           title: String(row.title || ""),
           description: String(row.description || ""),
           audience: String(row.audience || ""),

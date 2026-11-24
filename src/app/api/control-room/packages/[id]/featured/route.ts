@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { requireStaff, handle, HttpError } from "@/lib/control-room/server/guard";
 
 export async function POST(_req: Request, ctx: { params: Promise<{ id: string }> }) {
@@ -16,6 +17,7 @@ export async function POST(_req: Request, ctx: { params: Promise<{ id: string }>
       p_target: pkg?.name || id,
     });
 
+    revalidatePath("/");
     return { ok: true, id };
   });
 }
