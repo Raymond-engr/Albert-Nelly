@@ -40,6 +40,51 @@ describe("POST /api/webhooks/email", () => {
     );
   });
 
+  it("rejects request if secret is set and signature is invalid or missing", async () => {
+    process.env.EMAIL_WEBHOOK_SECRET = "test-secret";
+    const req = new Request("http://localhost:3000/api/webhooks/email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type: "email.delivered", data: {} }),
+    });
+
+    const res = await POST(req);
+    expect(res.status).toBe(401);
+  });
+
+  it("accepts request if secret is set and signature is valid", async () => {
+    process.env.EMAIL_WEBHOOK_SECRET = "test-secret";
+    const crypto = await import("crypto");
+    const bodyStr = JSON.stringify({
+      type: "email.delivered",
+      data: { email_id: "resend_valid_1", tags: { recipient_id: "rec-valid" } },
+    });
+    const sig = crypto.createHmac("sha256", "test-secret").update(bodyStr).digest("hex");
+
+    const updateSpy = vi.fn().mockReturnValue({
+      eq: vi.fn().mockResolvedValue({ data: null, error: null }),
+    });
+    const mockAdmin = {
+      from: vi.fn().mockReturnValue({
+        update: updateSpy,
+      }),
+    };
+    vi.spyOn(adminModule, "getAdminClient").mockReturnValue(mockAdmin as unknown as ReturnType<typeof adminModule.getAdminClient>);
+
+    const req = new Request("http://localhost:3000/api/webhooks/email", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-webhook-signature": sig,
+      },
+      body: bodyStr,
+    });
+
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+    expect(updateSpy).toHaveBeenCalled();
+  });
+
   it("unsubscribes lead on hard bounce", async () => {
     const leadUpdateSpy = vi.fn().mockReturnValue({
       eq: vi.fn().mockResolvedValue({ data: null, error: null }),

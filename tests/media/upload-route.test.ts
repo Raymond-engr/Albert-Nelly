@@ -58,9 +58,6 @@ describe("POST /api/control-room/uploads", () => {
     expect(json.ok).toBe(true);
     expect(json.data.signedUrl).toContain("token=abc");
     expect(json.data.path).toBe("work/item-123.webp");
-
-    expect(updateSpy).toHaveBeenCalledWith({ image_path: "work/item-123.webp" });
-    expect(nextCache.revalidatePath).toHaveBeenCalledWith("/");
   });
 
   it("rejects unauthorized staff roles like sales", async () => {

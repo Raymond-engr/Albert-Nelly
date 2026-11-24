@@ -1,6 +1,5 @@
 import { requireStaff, handle, HttpError } from "@/lib/control-room/server/guard";
 import { validateUpload, getStoragePath, getPublicMediaUrl, MEDIA_BUCKET } from "@/lib/media";
-import { revalidatePath } from "next/cache";
 
 export async function POST(req: Request) {
   return handle(async () => {
@@ -42,25 +41,10 @@ export async function POST(req: Request) {
       throw new HttpError(500, `Storage error: ${uploadErr?.message || "Failed to create signed upload URL."}`);
     }
 
-    // Update the database record with the new media path
-    if (entityType === "work") {
-      const { error: dbErr } = await supabase
-        .from("work_items")
-        .update({ image_path: storagePath })
-        .eq("id", entityId);
-      if (dbErr) throw new HttpError(500, `Database error: ${dbErr.message}`);
-    } else {
-      const { error: dbErr } = await supabase
-        .from("partners")
-        .update({ logo_path: storagePath })
-        .eq("id", entityId);
-      if (dbErr) throw new HttpError(500, `Database error: ${dbErr.message}`);
-    }
-
-    revalidatePath("/");
-
+    // Note: Database record update (image_path / logo_path) is finalized
+    // when the form is submitted, preventing orphaned DB references if the client fails to upload.
     await supabase.rpc("log_activity", {
-      p_action: `Uploaded ${entityType} media`,
+      p_action: `Generated upload URL for ${entityType} media`,
       p_target: storagePath,
     });
 

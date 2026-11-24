@@ -30,6 +30,7 @@ export default function Partners() {
                     alt={t}
                     width={140}
                     height={40}
+                    unoptimized={logoUrl.endsWith(".svg")}
                     className="max-h-8 w-auto object-contain"
                   />
                 ) : (
