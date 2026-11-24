@@ -31,3 +31,7 @@ create policy "staff update self presence" on public.staff
   using (id = (select auth.uid()))
   with check (id = (select auth.uid()));
 
+-- Grant select on running_costs to anon for the public Showroom site
+grant select on table public.running_costs to anon;
+
+
