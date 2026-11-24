@@ -14,15 +14,23 @@ import { Brand } from "../ui/Brand";
 import { Icon } from "../ui/Icon";
 import { Avatar, btn, EmptyState } from "../ui/kit";
 
-function Sidebar({ staff, pathname, onNavigate }: { staff: Staff; pathname: string; onNavigate?: () => void }) {
+function Sidebar({ staff, pathname, isSyncing, onNavigate }: { staff: Staff; pathname: string; isSyncing?: boolean; onNavigate?: () => void }) {
   const items = NAV.filter((n) => can(staff.role, n.area));
   const groups = [...new Set(items.map((n) => n.group))];
   return (
     <div className="flex h-full flex-col gap-6 overflow-y-auto p-5">
-      <Link href="/control-room" onClick={onNavigate} className="flex flex-wrap items-center gap-2 text-ink no-underline">
-        <Brand />
-        <span className="rounded-full bg-mint px-2 py-0.5 text-xs font-semibold text-deep">Control Room</span>
-      </Link>
+      <div className="flex items-center justify-between">
+        <Link href="/control-room" onClick={onNavigate} className="flex flex-wrap items-center gap-2 text-ink no-underline">
+          <Brand />
+          <span className="rounded-full bg-mint px-2 py-0.5 text-xs font-semibold text-deep">Control Room</span>
+        </Link>
+        {isSyncing && (
+          <span className="flex items-center gap-1 rounded-full bg-mint/30 px-2 py-0.5 text-[10px] font-medium text-ink/70" title="Syncing updates in background...">
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-deep" />
+            Syncing
+          </span>
+        )}
+      </div>
       <nav aria-label="Control Room" className="flex flex-col gap-5">
         {groups.map((g) => (
           <div key={g || "top"} className="flex flex-col gap-1">
@@ -70,7 +78,7 @@ export function Shell({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [menu, setMenu] = useState(false);
-  const { status, error } = useDbStatus();
+  const { status, error, isSyncing, hasLoaded } = useDbStatus();
   const refresh = useDbRefresh();
 
   // Load snapshot data once staff session is confirmed
@@ -79,6 +87,13 @@ export function Shell({ children }: { children: ReactNode }) {
       void refresh();
     }
   }, [hydrated, staff, refresh]);
+
+  // Toast any background sync errors without disrupting the workspace
+  useEffect(() => {
+    if (error && hasLoaded) {
+      toast(`Background sync error: ${error}`, "error");
+    }
+  }, [error, hasLoaded]);
 
   // Handle unhandled ApiErrors with global toast notification
   useEffect(() => {
@@ -145,12 +160,12 @@ export function Shell({ children }: { children: ReactNode }) {
     <div className="min-h-svh bg-cloud text-ink dark:bg-paper lg:grid lg:grid-cols-[264px_1fr]">
       <a href="#cr-main" className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[80] focus:rounded-full focus:bg-ink focus:px-4 focus:py-2 focus:text-paper">Skip to content</a>
       <aside className="sticky top-0 hidden h-svh border-r border-line bg-paper lg:block">
-        <Sidebar staff={staff} pathname={pathname} />
+        <Sidebar staff={staff} pathname={pathname} isSyncing={isSyncing} />
       </aside>
       {menu && (
         <div className="fixed inset-0 z-50 flex lg:hidden" role="dialog" aria-modal="true" aria-label="Menu">
           <div className="w-72 max-w-[85vw] bg-paper shadow-xl">
-            <Sidebar staff={staff} pathname={pathname} onNavigate={() => setMenu(false)} />
+            <Sidebar staff={staff} pathname={pathname} isSyncing={isSyncing} onNavigate={() => setMenu(false)} />
           </div>
           <button type="button" className="flex-1 bg-ink/40" aria-label="Close menu" onClick={() => setMenu(false)} />
         </div>
@@ -161,19 +176,26 @@ export function Shell({ children }: { children: ReactNode }) {
             <Icon name="menu" size={22} />
           </button>
           <Brand />
-          <Avatar name={staff.name} size={32} />
+          <div className="flex items-center gap-2">
+            {isSyncing && (
+              <span className="flex items-center gap-1 rounded-full bg-mint/30 px-1.5 py-0.5 text-[10px] font-medium text-ink/70">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-deep" />
+              </span>
+            )}
+            <Avatar name={staff.name} size={32} />
+          </div>
         </div>
         <main id="cr-main" className="mx-auto w-full max-w-[1200px] flex-1 px-4 py-6 sm:px-8 sm:py-8">
           {!allowed ? (
             <EmptyState icon="shield" title="This screen isn’t available to your role" action={<Link href="/control-room" className={btn("outline")}>Back to the overview</Link>}>
               Ask an Owner if you need access to this area.
             </EmptyState>
-          ) : status === "loading" ? (
+          ) : status === "loading" && !hasLoaded ? (
             <div className="flex flex-col items-center justify-center py-24 text-center">
               <div className="h-8 w-8 animate-spin rounded-full border-2 border-mint border-t-deep" />
-              <p className="mt-4 text-sm font-medium text-ink/70">Syncing Control Room data…</p>
+              <p className="mt-4 text-sm font-medium text-ink/70">Opening the Control Room…</p>
             </div>
-          ) : status === "error" ? (
+          ) : status === "error" && !hasLoaded ? (
             <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center text-red-900 dark:border-red-900/40 dark:bg-red-950/20 dark:text-red-200">
               <h3 className="text-base font-semibold">Unable to load Control Room snapshot</h3>
               <p className="mt-1 text-sm text-red-700 dark:text-red-300">{error || "A connection or network error occurred."}</p>

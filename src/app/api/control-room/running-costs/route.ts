@@ -18,14 +18,27 @@ export async function PUT(req: Request) {
       throw new HttpError(422, "Expected array of running costs.");
     }
 
-    // Delete existing rows and insert new ones with positions
-    await supabase.from("running_costs").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+    const inserts = rows.map((r, i) => {
+      const item = typeof r.item === "string" ? r.item.trim() : "";
+      if (!item) {
+        throw new HttpError(422, "Running cost item name cannot be empty.");
+      }
+      return {
+        position: i + 1,
+        item,
+        amount: Math.floor(Math.max(0, Number(r.amount) || 0)),
+      };
+    });
 
-    const inserts = rows.map((r, i) => ({
-      position: i + 1,
-      item: r.item.trim(),
-      amount: Math.floor(Math.max(0, r.amount)),
-    }));
+    // Delete existing rows after payload is fully validated
+    const { error: delError } = await supabase
+      .from("running_costs")
+      .delete()
+      .neq("id", "00000000-0000-0000-0000-000000000000");
+
+    if (delError) {
+      throw new HttpError(400, delError.message || "Failed to clear running costs.");
+    }
 
     if (inserts.length > 0) {
       const { data: inserted, error } = await supabase

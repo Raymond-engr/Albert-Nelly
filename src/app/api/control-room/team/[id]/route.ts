@@ -21,7 +21,10 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
       throw new HttpError(422, "Valid role is required.");
     }
 
-    const admin = getAdminClient() || supabase;
+    const admin = getAdminClient();
+    if (!admin) {
+      throw new HttpError(500, "Database administration client unavailable.");
+    }
 
     // Check if target is an active owner and demotion would leave no active owner
     const { data: target } = await admin.from("staff").select("*").eq("id", id).single();
@@ -62,7 +65,10 @@ export async function DELETE(_req: Request, ctx: { params: Promise<{ id: string 
     const { id } = await ctx.params;
     const { supabase } = await requireStaff("team", "edit");
 
-    const admin = getAdminClient() || supabase;
+    const admin = getAdminClient();
+    if (!admin) {
+      throw new HttpError(500, "Database administration client unavailable.");
+    }
 
     const { data: target } = await admin.from("staff").select("*").eq("id", id).single();
     if (!target) throw new HttpError(404, "Team member not found.");

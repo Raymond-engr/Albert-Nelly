@@ -10,6 +10,12 @@ export async function POST(_req: Request, ctx: { params: Promise<{ id: string }>
       throw new HttpError(400, error.message || "Failed to set featured package.");
     }
 
+    const { data: pkg } = await supabase.from("packages").select("name").eq("id", id).maybeSingle();
+    await supabase.rpc("log_activity", {
+      p_action: "Set featured school package",
+      p_target: pkg?.name || id,
+    });
+
     return { ok: true, id };
   });
 }

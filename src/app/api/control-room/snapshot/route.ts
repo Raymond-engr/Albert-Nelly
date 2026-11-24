@@ -1,4 +1,4 @@
-import { requireStaff, handle } from "@/lib/control-room/server/guard";
+import { requireStaff, handle, HttpError } from "@/lib/control-room/server/guard";
 import {
   rowToStaff,
   rowToLead,
@@ -66,6 +66,28 @@ export async function GET() {
       supabase.from("settings").select("*").maybeSingle(),
       supabase.from("activity_log").select("*").order("at", { ascending: false }).limit(200),
     ]);
+
+    const queries = [
+      { name: "staff", res: staffRes },
+      { name: "leads", res: leadsRes },
+      { name: "deals", res: dealsRes },
+      { name: "payments", res: paymentsRes },
+      { name: "campaigns", res: campaignsRes },
+      { name: "services", res: servicesRes },
+      { name: "packages", res: packagesRes },
+      { name: "runningCosts", res: runningCostsRes },
+      { name: "work", res: workRes },
+      { name: "partners", res: partnersRes },
+      { name: "referrers", res: referrersRes },
+      { name: "templates", res: templatesRes },
+      { name: "settings", res: settingsRes },
+      { name: "activity", res: activityRes },
+    ];
+
+    const failed = queries.find((q) => "error" in q.res && q.res.error);
+    if (failed && "error" in failed.res && failed.res.error) {
+      throw new HttpError(500, `Failed to load snapshot table (${failed.name}): ${failed.res.error.message}`);
+    }
 
     const db: Db = {
       staff: (staffRes.data || []).map(rowToStaff),

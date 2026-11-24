@@ -34,6 +34,18 @@ export async function POST(req: Request) {
       throw new HttpError(422, "Agreed price cannot be negative.", { agreed: "Invalid price" });
     }
 
+    let commissionRate: number | null = null;
+    if (referrerId) {
+      const { data: ref } = await supabase
+        .from("referrers")
+        .select("rate")
+        .eq("id", referrerId)
+        .maybeSingle();
+      if (ref && ref.rate != null) {
+        commissionRate = Number(ref.rate);
+      }
+    }
+
     const newDeal = {
       title: title.trim(),
       client: client.trim(),
@@ -42,7 +54,7 @@ export async function POST(req: Request) {
       stage: "new",
       lead_id: leadId || null,
       referrer_id: referrerId || null,
-      commission_rate: null,
+      commission_rate: commissionRate,
       owner_id: user.id,
       notes: "",
     };

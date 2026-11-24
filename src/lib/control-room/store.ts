@@ -94,10 +94,22 @@ export type DbStatus = "loading" | "ready" | "error";
 type StatusState = {
   status: DbStatus;
   error: string | null;
+  isSyncing: boolean;
+  hasLoaded: boolean;
 };
 
-let statusState: StatusState = { status: "loading", error: null };
-const SERVER_STATUS: StatusState = { status: "loading", error: null };
+let statusState: StatusState = {
+  status: "loading",
+  error: null,
+  isSyncing: false,
+  hasLoaded: false,
+};
+const SERVER_STATUS: StatusState = {
+  status: "loading",
+  error: null,
+  isSyncing: false,
+  hasLoaded: false,
+};
 const statusListeners = new Set<() => void>();
 const emitStatus = () => statusListeners.forEach((l) => l());
 
@@ -115,8 +127,15 @@ export function useDbStatus(): StatusState {
 }
 
 export async function refreshDb(): Promise<void> {
-  statusState = { status: "loading", error: null };
+  // If we already loaded initial data, keep status as 'ready' and only set isSyncing = true.
+  // Setting status back to 'loading' unmounts all children and causes full-page UI flicker on save.
+  if (statusState.hasLoaded) {
+    statusState = { ...statusState, isSyncing: true, error: null };
+  } else {
+    statusState = { status: "loading", error: null, isSyncing: true, hasLoaded: false };
+  }
   emitStatus();
+
   try {
     const res = await fetch("/api/control-room/snapshot", { cache: "no-store" });
     if (!res.ok) {
@@ -128,11 +147,15 @@ export async function refreshDb(): Promise<void> {
       throw new Error(json.error || "Failed to load snapshot data.");
     }
     dbStore.set(() => json.data);
-    statusState = { status: "ready", error: null };
+    statusState = { status: "ready", error: null, isSyncing: false, hasLoaded: true };
     emitStatus();
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Failed to load snapshot";
-    statusState = { status: "error", error: msg };
+    if (statusState.hasLoaded) {
+      statusState = { ...statusState, isSyncing: false, error: msg };
+    } else {
+      statusState = { status: "error", error: msg, isSyncing: false, hasLoaded: false };
+    }
     emitStatus();
   }
 }
