@@ -1,5 +1,5 @@
 import { call } from "./http";
-import { refreshDb } from "./store";
+import { dbStore, refreshDb } from "./store";
 import type { Deal, DealStage, Payment } from "./types";
 
 export type NewDealInput = {
@@ -31,8 +31,20 @@ export const dealsApi = {
     await refreshDb();
   },
   async move(id: string, stage: DealStage): Promise<void> {
-    await call("POST", `/api/control-room/deals/${id}/stage`, { stage });
-    await refreshDb();
+    // Optimistic update in client dbStore so the card immediately snaps to the new column without rubber-banding
+    dbStore.set((prev) => ({
+      ...prev,
+      deals: prev.deals.map((d) => (d.id === id ? { ...d, stage } : d)),
+    }));
+
+    try {
+      await call("POST", `/api/control-room/deals/${id}/stage`, { stage });
+      await refreshDb();
+    } catch (err) {
+      // Revert snapshot if the server rejected the move
+      await refreshDb();
+      throw err;
+    }
   },
 };
 
