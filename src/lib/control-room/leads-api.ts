@@ -15,4 +15,8 @@ export const leadsApi = {
     await refreshDb();
     return deal;
   },
+  async convertToReferrer(leadId: string, rate?: number): Promise<void> {
+    await call("POST", `/api/control-room/leads/${leadId}/convert-to-referrer`, { rate });
+    await refreshDb();
+  },
 };

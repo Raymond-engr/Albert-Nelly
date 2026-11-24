@@ -37,6 +37,7 @@ export type Lead = {
   tags: string[];
   dealId: string | null;
   ownerId: string | null;
+  referrerId?: string | null;
 };
 
 export type DealStage = "new" | "conversation" | "quote" | "deposit" | "progress" | "delivered" | "closed" | "lost";

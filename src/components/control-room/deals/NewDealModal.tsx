@@ -17,8 +17,11 @@ function NewDealForm({ lead, onClose, onCreated }: { lead: Lead | null; onClose:
   const [client, setClient] = useState(lead?.name ?? "");
   const [service, setService] = useState(lead?.service ?? db.services[0]?.title ?? "");
   const [agreed, setAgreed] = useState("");
+  const [referrerId, setReferrerId] = useState(lead?.referrerId ?? "");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+
+  const matchedRef = db.referrers.find((r) => r.id === referrerId);
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -31,7 +34,14 @@ function NewDealForm({ lead, onClose, onCreated }: { lead: Lead | null; onClose:
     if (Object.keys(next).length || price === null) return;
     setSaving(true);
     try {
-      const input = { title: title.trim(), client: client.trim(), service, agreed: price };
+      const input = {
+        title: title.trim(),
+        client: client.trim(),
+        service,
+        agreed: price,
+        referrerId: referrerId || null,
+        commissionRate: matchedRef ? matchedRef.rate : null,
+      };
       const deal = lead ? await leadsApi.convertToDeal(lead.id, input) : await dealsApi.create(input);
       toast("Deal created.");
       onCreated?.(deal);
@@ -53,6 +63,16 @@ function NewDealForm({ lead, onClose, onCreated }: { lead: Lead | null; onClose:
       <Field id="nd-service" label="Service">
         <select id="nd-service" className={inputCls} value={service} onChange={(e) => setService(e.target.value)}>
           {services.map((s) => <option key={s}>{s}</option>)}
+        </select>
+      </Field>
+      <Field id="nd-ref" label="Introduced by">
+        <select id="nd-ref" className={inputCls} value={referrerId} onChange={(e) => setReferrerId(e.target.value)}>
+          <option value="">Nobody (direct client)</option>
+          {db.referrers.filter((r) => r.status === "active" || r.id === referrerId).map((r) => (
+            <option key={r.id} value={r.id}>
+              {r.name} ({r.rate}% commission)
+            </option>
+          ))}
         </select>
       </Field>
       <Field id="nd-agreed" label="Agreed price in naira" hint="Leave empty if the price is not agreed yet." error={errors.agreed}>

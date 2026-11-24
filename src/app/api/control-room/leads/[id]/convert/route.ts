@@ -7,14 +7,14 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
     const { id } = await ctx.params;
     const { supabase } = await requireStaff("leads", "edit");
 
-    let body: { title?: string; client?: string; service?: string; agreed?: number };
+    let body: { title?: string; client?: string; service?: string; agreed?: number; referrerId?: string | null; commissionRate?: number | null };
     try {
       body = await req.json();
     } catch {
       throw new HttpError(400, "Invalid JSON payload.");
     }
 
-    const { title, client, service, agreed = 0 } = body;
+    const { title, client, service, agreed = 0, referrerId, commissionRate } = body;
     if (!title || title.trim().length < 2) {
       throw new HttpError(422, "Deal name is required.", { title: "Title required" });
     }
@@ -34,6 +34,8 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
       p_client: client.trim(),
       p_service: service.trim(),
       p_agreed: Math.floor(agreed),
+      p_referrer_id: referrerId || null,
+      p_commission_rate: typeof commissionRate === "number" ? commissionRate : null,
     });
 
     if (rpcError || !dealId) {

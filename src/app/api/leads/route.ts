@@ -43,10 +43,26 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, returning: false, demo: true });
   }
 
+  // Resolve referrer attribution if provided
+  let referrerId: string | null = null;
+  const rawRef = p.ref || new URL(req.url).searchParams.get("ref");
+  if (rawRef && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(rawRef)) {
+    const { data: refRow } = await admin
+      .from("referrers")
+      .select("id")
+      .eq("id", rawRef)
+      .eq("status", "active")
+      .maybeSingle();
+    if (refRow?.id) {
+      referrerId = refRow.id;
+    }
+  }
+
   const row = {
     type: p.type, name: p.name, email: p.email, whatsapp: p.whatsapp, service: p.service,
     business_name: p.business, category: p.category, birth_day: p.birthDay, birth_month: p.birthMonth,
     consent: p.consent, context: p.context,
+    referrer_id: referrerId,
   };
 
   const { data: existing, error: lookupError } = await admin.from("leads").select("id").eq("email", p.email).maybeSingle();

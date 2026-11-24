@@ -17,11 +17,22 @@ export async function POST(req: Request) {
     if (!email || !email.includes("@")) throw new HttpError(422, "Valid email is required.");
     if (!whatsapp) throw new HttpError(422, "WhatsApp number is required.");
 
+    const normalizedEmail = email.trim().toLowerCase();
+    const { data: existing } = await supabase
+      .from("referrers")
+      .select("id")
+      .ilike("email", normalizedEmail)
+      .maybeSingle();
+
+    if (existing) {
+      throw new HttpError(409, `A referrer with email "${email.trim()}" already exists.`);
+    }
+
     const { data: created, error } = await supabase
       .from("referrers")
       .insert({
         name: name.trim(),
-        email: email.trim().toLowerCase(),
+        email: normalizedEmail,
         whatsapp: whatsapp.trim(),
         rate: Number(rate) || 0,
         status,

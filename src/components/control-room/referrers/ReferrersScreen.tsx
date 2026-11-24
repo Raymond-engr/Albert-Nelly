@@ -64,15 +64,63 @@ function ReferrerForm({ item, canEdit, onClose }: { item: Referrer | null; canEd
 function ReferrerDetail({ referrer, canEdit, money }: { referrer: Referrer; canEdit: boolean; money: boolean }) {
   const db = useDb();
   const deals = db.deals.filter((d) => d.referrerId === referrer.id);
+  const leads = db.leads.filter((l) => l.referrerId === referrer.id);
+  const [copied, setCopied] = useState(false);
+
+  const referralUrl = typeof window !== "undefined"
+    ? `${window.location.origin}/?ref=${referrer.id}`
+    : `https://albertnelly.com/?ref=${referrer.id}`;
+
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(referralUrl);
+      setCopied(true);
+      toast("Referral link copied to clipboard.");
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast("Failed to copy referral link.");
+    }
+  };
+
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-wrap gap-2">
         <a className={btn("outline", "sm")} href={`https://wa.me/${referrer.whatsapp}`} target="_blank" rel="noopener noreferrer"><Icon name="chat" size={16} /> <span className="ml-1.5">WhatsApp</span></a>
         <a className={btn("outline", "sm")} href={`mailto:${referrer.email}`}><Icon name="mail" size={16} /> <span className="ml-1.5">Email</span></a>
+        <button type="button" className={btn("outline", "sm")} onClick={copyLink}>
+          <Icon name={copied ? "check" : "link"} size={16} />
+          <span className="ml-1.5">{copied ? "Copied link!" : "Copy referral link"}</span>
+        </button>
       </div>
+
+      <div className="rounded-xl border border-line bg-mint/30 p-3 text-xs text-ink/80">
+        <span className="font-semibold text-ink">Referral tracking link:</span>
+        <code className="mt-1 block truncate rounded bg-white px-2 py-1 font-mono text-[11px] select-all border border-line/60">
+          {referralUrl}
+        </code>
+      </div>
+
       <ReferrerForm key={referrer.id} item={referrer} canEdit={canEdit} />
+
       <div className="border-t border-line pt-4">
-        <h3 className="mb-2 font-display text-base font-semibold">Deals they introduced</h3>
+        <h3 className="mb-2 font-display text-base font-semibold">Introduced leads ({leads.length})</h3>
+        {leads.length === 0 ? <div className="text-sm text-ink/70">No leads captured via their referral link yet.</div> : (
+          <ul className="m-0 list-none divide-y divide-line p-0">
+            {leads.map((l) => (
+              <li key={l.id} className="flex items-center justify-between gap-3 py-2 text-sm">
+                <div>
+                  <span className="font-medium text-ink">{l.name}</span>
+                  <span className="ml-2 text-xs text-ink/60">({l.service || "General"})</span>
+                </div>
+                <Badge tone={l.status === "deal" ? "green" : "neutral"}>{l.status}</Badge>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <div className="border-t border-line pt-4">
+        <h3 className="mb-2 font-display text-base font-semibold">Deals they introduced ({deals.length})</h3>
         {deals.length === 0 ? <div className="text-sm text-ink/70">No deals yet.</div> : (
           <ul className="m-0 list-none divide-y divide-line p-0">
             {deals.map((d) => {
@@ -81,7 +129,11 @@ function ReferrerDetail({ referrer, canEdit, money }: { referrer: Referrer; canE
                 <li key={d.id} className="flex items-center justify-between gap-3 py-2.5">
                   <div className="min-w-0">
                     <Link href={`/control-room/deals/${d.id}`} className="block truncate text-[15px] font-semibold">{d.title}</Link>
-                    <div className="text-sm text-ink/70">{d.agreed ? naira(d.agreed) : "No price yet"}{money && bal.commissionOwed > 0 ? `, ${naira(bal.commissionOwed)} owed` : ""}</div>
+                    <div className="text-sm text-ink/70">
+                      {d.agreed ? naira(d.agreed) : "No price yet"}
+                      {money && bal.commissionOwed > 0 && <span className="ml-1 text-green-700 font-medium">({naira(bal.commissionOwed)} owed)</span>}
+                      {money && bal.commissionPending > 0 && <span className="ml-1 text-sun font-medium">({naira(bal.commissionPending)} pending delivery)</span>}
+                    </div>
                   </div>
                   <Badge tone={STAGE_TONE[d.stage]}>{DEAL_STAGE_LABEL[d.stage]}</Badge>
                 </li>

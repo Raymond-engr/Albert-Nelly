@@ -54,6 +54,7 @@ export function rowToLead(row: Record<string, unknown>): Lead {
     tags: Array.isArray(row.tags) ? (row.tags as string[]) : [],
     dealId: row.deal_id ? String(row.deal_id) : null,
     ownerId: row.owner_id ? String(row.owner_id) : null,
+    referrerId: row.referrer_id ? String(row.referrer_id) : null,
   };
 }
 

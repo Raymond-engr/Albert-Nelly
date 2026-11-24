@@ -197,12 +197,17 @@ export function DealDetail({ id }: { id: string }) {
               {referrer && deal.commissionRate !== null ? (
                 <>
                   <div className="text-[15px]"><span className="font-semibold">{referrer.name}</span>, {deal.commissionRate} percent of the agreed price</div>
-                  <dl className="mt-3 mb-0 grid grid-cols-3 gap-3 text-sm">
-                    <div><dt className="text-ink/70">Due</dt><dd className="m-0 text-base font-semibold">{naira(bal.commissionDue)}</dd></div>
-                    <div><dt className="text-ink/70">Paid</dt><dd className="m-0 text-base font-semibold">{naira(bal.commissionPaid)}</dd></div>
-                    <div><dt className="text-ink/70">Owed</dt><dd className="m-0 text-base font-semibold">{naira(bal.commissionOwed)}</dd></div>
+                  <dl className="mt-3 mb-0 grid grid-cols-4 gap-2 text-sm">
+                    <div><dt className="text-ink/70">Potential</dt><dd className="m-0 text-sm font-semibold">{naira(bal.commissionDue || bal.commissionPending)}</dd></div>
+                    <div><dt className="text-ink/70">Pending</dt><dd className="m-0 text-sm font-semibold text-sun">{naira(bal.commissionPending)}</dd></div>
+                    <div><dt className="text-ink/70">Paid</dt><dd className="m-0 text-sm font-semibold">{naira(bal.commissionPaid)}</dd></div>
+                    <div><dt className="text-ink/70">Owed</dt><dd className="m-0 text-sm font-semibold text-green-700">{naira(bal.commissionOwed)}</dd></div>
                   </dl>
-                  <div className="mt-3 text-sm text-ink/70">The commission becomes due when the deal is Delivered or Closed.</div>
+                  <div className="mt-3 text-xs text-ink/70">
+                    {deal.stage === "delivered" || deal.stage === "closed"
+                      ? "Deal delivered/closed: commission is now payable."
+                      : "Commission is pending delivery. It becomes payable once the deal is moved to Delivered or Closed."}
+                  </div>
                   {bal.commissionOwed > 0 && (
                     <button type="button" className={btn("outline", "sm", "mt-3")} onClick={() => openPayment({ direction: "out", category: "commission", amount: bal.commissionOwed })}>Record commission payment</button>
                   )}
