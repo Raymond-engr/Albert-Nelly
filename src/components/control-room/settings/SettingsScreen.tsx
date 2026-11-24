@@ -16,9 +16,11 @@ function GeneralForm({ settings }: { settings: Settings }) {
   const [min, setMin] = useState(String(settings.commissionMin));
   const [max, setMax] = useState(String(settings.commissionMax));
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState(false);
 
   const save = async (e: FormEvent) => {
     e.preventDefault();
+    if (saving) return;
     const next: Record<string, string> = {};
     const d = Number(discount), lo = Number(min), hi = Number(max);
     const pctOk = (v: string, n: number) => v.trim() !== "" && !Number.isNaN(n) && n >= 0 && n <= 100;
@@ -29,8 +31,13 @@ function GeneralForm({ settings }: { settings: Settings }) {
     else if (pctOk(min, lo) && lo > hi) next.max = "The highest rate must not be below the lowest.";
     setErrors(next);
     if (Object.keys(next).length) return;
-    await settingsApi.save({ whatsappNumber: `+${wa.replace(/\D/g, "")}`, birthdayDiscount: d, commissionMin: lo, commissionMax: hi });
-    toast("Settings saved.");
+    setSaving(true);
+    try {
+      await settingsApi.save({ whatsappNumber: `+${wa.replace(/\D/g, "")}`, birthdayDiscount: d, commissionMin: lo, commissionMax: hi });
+      toast("Settings saved.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -46,7 +53,7 @@ function GeneralForm({ settings }: { settings: Settings }) {
         <div />
         <Field id="s-min" label="Usual commission, lowest (percent)" error={errors.min}><input id="s-min" inputMode="decimal" className={inputCls} value={min} onChange={(e) => setMin(e.target.value)} aria-invalid={!!errors.min} /></Field>
         <Field id="s-max" label="Usual commission, highest (percent)" error={errors.max}><input id="s-max" inputMode="decimal" className={inputCls} value={max} onChange={(e) => setMax(e.target.value)} aria-invalid={!!errors.max} /></Field>
-        <div className="sm:col-span-2"><button type="submit" className={btn("brand")}>Save settings</button></div>
+        <div className="sm:col-span-2"><button type="submit" className={btn("brand")} disabled={saving} aria-busy={saving}>{saving ? "Saving…" : "Save settings"}</button></div>
       </form>
     </Card>
   );
@@ -64,13 +71,20 @@ function TemplatesForm() {
   const list = db.templates.filter((t) => t.type !== "birthday");
   const [bodies, setBodies] = useState<Record<string, string>>(Object.fromEntries(list.map((t) => [t.id, t.body])));
   const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
 
   const save = async (e: FormEvent) => {
     e.preventDefault();
+    if (saving) return;
     if (list.some((t) => (bodies[t.id] ?? "").trim().length < 10)) return setError("Every message needs at least a sentence.");
     setError("");
-    for (const t of list) if (bodies[t.id] !== t.body) await templatesApi.update(t.id, bodies[t.id]);
-    toast("Message templates saved.");
+    setSaving(true);
+    try {
+      for (const t of list) if (bodies[t.id] !== t.body) await templatesApi.update(t.id, bodies[t.id]);
+      toast("Message templates saved.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -81,7 +95,7 @@ function TemplatesForm() {
           <TemplateEditor key={t.id} id={`tpl-${t.id}`} label={t.label} hint={HINTS[t.type as LeadType]} value={bodies[t.id] ?? ""} onChange={(v) => setBodies({ ...bodies, [t.id]: v })} kind={t.type as LeadType} />
         ))}
         {error && <div role="alert" className="text-sm text-danger">{error}</div>}
-        <div><button type="submit" className={btn("brand")}>Save templates</button></div>
+        <div><button type="submit" className={btn("brand")} disabled={saving} aria-busy={saving}>{saving ? "Saving…" : "Save templates"}</button></div>
       </form>
     </Card>
   );

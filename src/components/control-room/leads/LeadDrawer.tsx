@@ -26,6 +26,7 @@ function LeadForm({ lead, onConvert, onPromoteReferrer }: { lead: Lead; onConver
   const [ownerId, setOwnerId] = useState(lead.ownerId ?? "");
   const [tags, setTags] = useState(lead.tags.join(", "));
   const [notes, setNotes] = useState(lead.notes);
+  const [pending, setPending] = useState<"save" | "archive" | null>(null);
   if (!staff) return null;
 
   const canEdit = can(staff.role, "leads", "edit");
@@ -36,13 +37,26 @@ function LeadForm({ lead, onConvert, onPromoteReferrer }: { lead: Lead; onConver
   const interest = [lead.context, lead.service].filter((x, i, a) => x && a.indexOf(x) === i).join(", ");
 
   const save = async () => {
-    await leadsApi.update(lead.id, { status, ownerId: ownerId || null, notes, tags: parsedTags });
-    toast("Lead saved.");
+    if (pending) return;
+    setPending("save");
+    try {
+      await leadsApi.update(lead.id, { status, ownerId: ownerId || null, notes, tags: parsedTags });
+      toast("Lead saved.");
+    } finally {
+      setPending(null);
+    }
   };
   const toggleArchive = async () => {
+    if (pending) return;
     const next: LeadStatus = lead.status === "archived" ? "new" : "archived";
-    await leadsApi.update(lead.id, { status: next });
-    toast(next === "archived" ? "Lead archived." : "Lead restored.");
+    setPending("archive");
+    try {
+      await leadsApi.update(lead.id, { status: next });
+      setStatus(next);
+      toast(next === "archived" ? "Lead archived." : "Lead restored.");
+    } finally {
+      setPending(null);
+    }
   };
 
   return (
@@ -100,10 +114,10 @@ function LeadForm({ lead, onConvert, onPromoteReferrer }: { lead: Lead; onConver
       {lead.type !== "hire" && <div className="text-sm text-ink/70">This is a {lead.type === "refer" ? "referrer" : lead.type === "partner" ? "partner" : "newsletter"} lead, not a client. {lead.type === "refer" && <Link href="/control-room/referrers">Open Referrers</Link>}{lead.type === "partner" && <Link href="/control-room/partners">Open Partners</Link>}</div>}
 
       <div className="flex flex-wrap gap-2 border-t border-line pt-4">
-        {canEdit && <button type="button" className={btn("brand")} disabled={!dirty} onClick={save}>Save changes</button>}
-        {canDeal && <button type="button" className={btn("dark")} onClick={onConvert}>Turn into a deal</button>}
-        {canPromote && <button type="button" className={btn("brand")} onClick={onPromoteReferrer}>Turn into a referrer</button>}
-        {canEdit && !lead.dealId && <button type="button" className={btn("ghost")} onClick={toggleArchive}>{lead.status === "archived" ? "Restore" : "Archive"}</button>}
+        {canEdit && <button type="button" className={btn("brand")} disabled={!dirty || !!pending} aria-busy={pending === "save"} onClick={save}>{pending === "save" ? "Saving…" : "Save changes"}</button>}
+        {canDeal && <button type="button" className={btn("dark")} disabled={!!pending} onClick={onConvert}>Turn into a deal</button>}
+        {canPromote && <button type="button" className={btn("brand")} disabled={!!pending} onClick={onPromoteReferrer}>Turn into a referrer</button>}
+        {canEdit && !lead.dealId && <button type="button" className={btn("ghost")} disabled={!!pending} aria-busy={pending === "archive"} onClick={toggleArchive}>{pending === "archive" ? (lead.status === "archived" ? "Restoring…" : "Archiving…") : (lead.status === "archived" ? "Restore" : "Archive")}</button>}
       </div>
     </div>
   );

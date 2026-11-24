@@ -26,6 +26,7 @@ function DealForm({ deal, canEdit, money }: { deal: Deal; canEdit: boolean; mone
   const [referrerId, setReferrerId] = useState(deal.referrerId ?? "");
   const [rate, setRate] = useState(deal.commissionRate !== null ? String(deal.commissionRate) : "");
   const [notes, setNotes] = useState(deal.notes);
+  const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const { commissionMin, commissionMax } = db.settings;
@@ -40,6 +41,7 @@ function DealForm({ deal, canEdit, money }: { deal: Deal; canEdit: boolean; mone
   };
   const save = async (e: FormEvent) => {
     e.preventDefault();
+    if (saving) return;
     const next: Record<string, string> = {};
     const price = parseNaira(agreed);
     if (title.trim().length < 3) next.title = "Give the deal a short name.";
@@ -48,10 +50,15 @@ function DealForm({ deal, canEdit, money }: { deal: Deal; canEdit: boolean; mone
     if (money && referrerId && (pct === null || Number.isNaN(pct) || pct < 0 || pct > 100)) next.rate = "Enter a percentage between 0 and 100.";
     setErrors(next);
     if (Object.keys(next).length || price === null) return;
-    const patch: DealPatch = { title: title.trim(), client: client.trim(), service, agreed: price, referrerId: referrerId || null, notes };
-    if (money) patch.commissionRate = referrerId ? pct : null;
-    await dealsApi.update(deal.id, patch);
-    toast("Deal saved.");
+    setSaving(true);
+    try {
+      const patch: DealPatch = { title: title.trim(), client: client.trim(), service, agreed: price, referrerId: referrerId || null, notes };
+      if (money) patch.commissionRate = referrerId ? pct : null;
+      await dealsApi.update(deal.id, patch);
+      toast("Deal saved.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -86,7 +93,13 @@ function DealForm({ deal, canEdit, money }: { deal: Deal; canEdit: boolean; mone
           <textarea id="d-notes" rows={4} className={`${inputCls} py-2.5`} value={notes} disabled={!canEdit} onChange={(e) => setNotes(e.target.value)} />
         </Field>
       </div>
-      {canEdit && <div className="sm:col-span-2"><button type="submit" className={btn("brand")}>Save changes</button></div>}
+      {canEdit && (
+        <div className="sm:col-span-2">
+          <button type="submit" className={btn("brand")} disabled={saving} aria-busy={saving}>
+            {saving ? "Saving…" : "Save changes"}
+          </button>
+        </div>
+      )}
     </form>
   );
 }
@@ -100,6 +113,7 @@ export function DealDetail({ id }: { id: string }) {
   const db = useDb();
   const staff = useSession();
   const [paying, setPaying] = useState(false);
+  const [moving, setMoving] = useState(false);
   const [suggestion, setSuggestion] = useState<PaymentSuggestion | undefined>(undefined);
   if (!staff) return null;
 
@@ -119,8 +133,14 @@ export function DealDetail({ id }: { id: string }) {
   const who = (sid: string) => db.staff.find((s) => s.id === sid)?.name ?? "Unknown";
 
   const move = async (stage: DealStage) => {
-    await dealsApi.move(deal.id, stage);
-    toast(`Moved to ${DEAL_STAGE_LABEL[stage]}.`);
+    if (moving) return;
+    setMoving(true);
+    try {
+      await dealsApi.move(deal.id, stage);
+      toast(`Moved to ${DEAL_STAGE_LABEL[stage]}.`);
+    } finally {
+      setMoving(false);
+    }
   };
   const openPayment = (s?: PaymentSuggestion) => {
     setSuggestion(s);
@@ -135,9 +155,10 @@ export function DealDetail({ id }: { id: string }) {
         description={<span className="inline-flex flex-wrap items-center gap-2">{deal.client}, {deal.service} <Badge tone={STAGE_TONE[deal.stage]}>{DEAL_STAGE_LABEL[deal.stage]}</Badge></span>}
         actions={
           <>
-            <select aria-label="Stage" className={`${inputCls} !w-auto`} value={deal.stage} disabled={!canEdit} onChange={(e) => void move(e.target.value as DealStage)}>
+            <select aria-label="Stage" className={`${inputCls} !w-auto`} value={deal.stage} disabled={!canEdit || moving} aria-busy={moving} onChange={(e) => void move(e.target.value as DealStage)}>
               {STAGES.map((s) => <option key={s} value={s}>{DEAL_STAGE_LABEL[s]}</option>)}
             </select>
+            {moving && <span role="status" className="text-sm text-ink/70">Updating stage…</span>}
             {money && <button type="button" className={btn("brand")} onClick={() => openPayment()}><Icon name="plus" size={18} /> <span className="ml-1.5">Record payment</span></button>}
           </>
         }

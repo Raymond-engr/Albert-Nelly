@@ -15,6 +15,17 @@ import { Icon } from "../ui/Icon";
 import { Avatar, btn, EmptyState } from "../ui/kit";
 
 function Sidebar({ staff, pathname, isSyncing, onNavigate }: { staff: Staff; pathname: string; isSyncing?: boolean; onNavigate?: () => void }) {
+  const [signingOut, setSigningOut] = useState(false);
+  const signOut = async () => {
+    if (signingOut) return;
+    setSigningOut(true);
+    try {
+      await auth.signOut();
+      onNavigate?.();
+    } finally {
+      setSigningOut(false);
+    }
+  };
   const items = NAV.filter((n) => can(staff.role, n.area));
   const groups = [...new Set(items.map((n) => n.group))];
   return (
@@ -62,8 +73,8 @@ function Sidebar({ staff, pathname, isSyncing, onNavigate }: { staff: Staff; pat
           </div>
         </div>
         <div className="flex pt-1">
-          <button type="button" className={btn("outline", "sm", "w-full justify-center")} onClick={() => { onNavigate?.(); void auth.signOut(); }}>
-            <Icon name="logout" size={16} /> <span className="ml-1.5">Sign out</span>
+          <button type="button" className={btn("outline", "sm", "w-full justify-center")} onClick={signOut} disabled={signingOut} aria-busy={signingOut}>
+            <Icon name="logout" size={16} /> <span className="ml-1.5">{signingOut ? "Signing out…" : "Sign out"}</span>
           </button>
         </div>
       </div>
@@ -159,6 +170,15 @@ export function Shell({ children }: { children: ReactNode }) {
   const allowed = can(staff.role, areaForPath(pathname));
   return (
     <div className="min-h-svh bg-cloud text-ink dark:bg-paper lg:grid lg:grid-cols-[264px_1fr]">
+      <div
+        className={`fixed top-0 left-0 right-0 z-[100] h-0.5 bg-gradient-to-r from-mint via-brand to-mint transition-opacity duration-300 motion-reduce:transition-none ${
+          isSyncing ? "opacity-100 motion-safe:animate-pulse" : "opacity-0 pointer-events-none"
+        }`}
+        role="status"
+        aria-live="polite"
+      >
+        <span className="sr-only">{isSyncing ? "Synchronizing updates…" : ""}</span>
+      </div>
       <a href="#cr-main" className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[80] focus:rounded-full focus:bg-ink focus:px-4 focus:py-2 focus:text-paper">Skip to content</a>
       <aside className="sticky top-0 hidden h-svh border-r border-line bg-paper lg:block">
         <Sidebar staff={staff} pathname={pathname} isSyncing={isSyncing} />

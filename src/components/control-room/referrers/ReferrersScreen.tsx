@@ -24,10 +24,12 @@ function ReferrerForm({ item, canEdit, onClose }: { item: Referrer | null; canEd
   const [rate, setRate] = useState(item ? String(item.rate) : String(db.settings.commissionMin));
   const [status, setStatus] = useState<Referrer["status"]>(item?.status ?? "active");
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState(false);
   const { commissionMin, commissionMax } = db.settings;
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
+    if (saving) return;
     const next: Record<string, string> = {};
     const pct = Number(rate);
     if (name.trim().length < 2) next.name = "Enter the referrer’s name.";
@@ -37,10 +39,15 @@ function ReferrerForm({ item, canEdit, onClose }: { item: Referrer | null; canEd
     setErrors(next);
     if (Object.keys(next).length) return;
     const data = { name: name.trim(), email: email.trim().toLowerCase(), whatsapp: whatsapp.replace(/\D/g, ""), rate: pct, status };
-    if (item) await referrersApi.update(item.id, data);
-    else await referrersApi.create(data);
-    toast(item ? "Referrer saved." : "Referrer added.");
-    onClose?.();
+    setSaving(true);
+    try {
+      if (item) await referrersApi.update(item.id, data);
+      else await referrersApi.create(data);
+      toast(item ? "Referrer saved." : "Referrer added.");
+      onClose?.();
+    } finally {
+      setSaving(false);
+    }
   };
 
   const pct = Number(rate);
@@ -56,7 +63,7 @@ function ReferrerForm({ item, canEdit, onClose }: { item: Referrer | null; canEd
       <Field id="r-status" label="Status">
         <select id="r-status" className={inputCls} value={status} disabled={!canEdit} onChange={(e) => setStatus(e.target.value as Referrer["status"])}><option value="active">Active</option><option value="paused">Paused</option></select>
       </Field>
-      {canEdit && <div className="flex justify-end gap-2">{onClose && <button type="button" className={btn("ghost")} onClick={onClose}>Cancel</button>}<button type="submit" className={btn("brand")}>{item ? "Save referrer" : "Add referrer"}</button></div>}
+      {canEdit && <div className="flex justify-end gap-2">{onClose && <button type="button" className={btn("ghost")} onClick={onClose} disabled={saving}>Cancel</button>}<button type="submit" className={btn("brand")} disabled={saving} aria-busy={saving}>{saving ? "Saving…" : item ? "Save referrer" : "Add referrer"}</button></div>}
     </form>
   );
 }
@@ -95,7 +102,7 @@ function ReferrerDetail({ referrer, canEdit, money }: { referrer: Referrer; canE
 
       <div className="rounded-xl border border-line bg-mint/30 p-3 text-xs text-ink/80">
         <span className="font-semibold text-ink">Referral tracking link:</span>
-        <code className="mt-1 block truncate rounded bg-white px-2 py-1 font-mono text-[11px] select-all border border-line/60">
+        <code className="mt-1 block truncate rounded border border-line/60 bg-card px-2 py-1 font-mono text-[11px] text-ink select-all">
           {referralUrl}
         </code>
       </div>

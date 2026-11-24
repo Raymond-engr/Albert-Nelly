@@ -28,6 +28,7 @@ export function CampaignsScreen() {
   const staff = useSession();
   const router = useRouter();
   const [filter, setFilter] = useState<Filter>("all");
+  const [creating, setCreating] = useState(false);
   if (!staff) return null;
 
   const canEdit = can(staff.role, "campaigns", "edit");
@@ -37,13 +38,19 @@ export function CampaignsScreen() {
     .sort((a, b) => RANK[a.status] - RANK[b.status] || (b.scheduledFor ?? b.sentAt ?? "").localeCompare(a.scheduledFor ?? a.sentAt ?? ""));
   const count = (s: Filter) => db.campaigns.filter((c) => s === "all" || c.status === s).length;
   const create = async () => {
-    const c = await campaignsApi.create();
-    router.push(`/control-room/campaigns/${c.id}`);
+    if (creating) return;
+    setCreating(true);
+    try {
+      const c = await campaignsApi.create();
+      router.push(`/control-room/campaigns/${c.id}`);
+    } finally {
+      setCreating(false);
+    }
   };
 
   return (
     <>
-      <PageHeader title="Campaigns" description="Emails to the people who joined through the site. WhatsApp is for one-to-one chats, not bulk sending." actions={canEdit ? <button type="button" className={btn("brand")} onClick={create}><Icon name="plus" size={18} /> <span className="ml-1.5">New campaign</span></button> : undefined} />
+      <PageHeader title="Campaigns" description="Emails to the people who joined through the site. WhatsApp is for one-to-one chats, not bulk sending." actions={canEdit ? <button type="button" className={btn("brand")} onClick={create} disabled={creating} aria-busy={creating}><Icon name="plus" size={18} /> <span className="ml-1.5">{creating ? "Creating…" : "New campaign"}</span></button> : undefined} />
       <div className="mb-4 overflow-x-auto">
         <Segmented<Filter> label="Status" value={filter} onChange={setFilter} options={[{ value: "all", label: "All", count: count("all") }, { value: "draft", label: "Drafts", count: count("draft") }, { value: "scheduled", label: "Scheduled", count: count("scheduled") }, { value: "sent", label: "Sent", count: count("sent") }, { value: "automated", label: "Automatic", count: count("automated") }]} />
       </div>
