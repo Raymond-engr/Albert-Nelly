@@ -25,15 +25,22 @@ function BirthdayTemplate({ id, initialBody, initialDiscount, canEdit }: { id: s
   const [discount, setDiscount] = useState(String(initialDiscount));
   const [width, setWidth] = useState(600);
   const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
 
   const n = Number(discount);
   const valid = discount.trim() !== "" && Number.isInteger(n) && n >= 0 && n <= 100;
   const save = async () => {
+    if (saving) return;
     if (!valid) return setError("Enter a whole number between 0 and 100.");
     setError("");
-    await templatesApi.update(id, body);
-    await settingsApi.save({ birthdayDiscount: n });
-    toast("Birthday email saved.");
+    setSaving(true);
+    try {
+      await templatesApi.update(id, body);
+      await settingsApi.save({ birthdayDiscount: n });
+      toast("Birthday email saved.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -45,7 +52,7 @@ function BirthdayTemplate({ id, initialBody, initialDiscount, canEdit }: { id: s
             <input id="b-discount" inputMode="numeric" className={`${inputCls} sm:max-w-40`} value={discount} disabled={!canEdit} onChange={(e) => setDiscount(e.target.value)} aria-invalid={!!error} />
           </Field>
           <div className="text-sm text-ink/70">The email also shows four partner ideas: photographers, birthday flyer designers, portrait artists and surprise event planners.</div>
-          {canEdit ? <div><button type="button" className={btn("brand")} onClick={save}>Save birthday email</button></div> : <div className="rounded-xl bg-sun/20 p-3 text-sm">Your role can view the birthday email but not change it.</div>}
+          {canEdit ? <div><button type="button" className={btn("brand")} onClick={save} disabled={saving} aria-busy={saving}>{saving ? "Saving…" : "Save birthday email"}</button></div> : <div className="rounded-xl bg-sun/20 p-3 text-sm">Your role can view the birthday email but not change it.</div>}
         </div>
       </Card>
       <div className="flex flex-col gap-3 xl:sticky xl:top-6 xl:self-start">

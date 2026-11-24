@@ -61,12 +61,15 @@ export function dealBalance(deal: Deal, payments: Payment[]) {
   const received = own.filter((p) => p.direction === "in").reduce((n, p) => n + p.amount, 0);
   const commissionPaid = own.filter((p) => p.direction === "out" && p.category === "commission").reduce((n, p) => n + p.amount, 0);
   const finished = deal.stage === "delivered" || deal.stage === "closed";
-  const commissionDue = deal.referrerId && deal.commissionRate && finished ? Math.round((deal.agreed * deal.commissionRate) / 100) : 0;
+  const potentialCommission = deal.referrerId && deal.commissionRate ? Math.round((deal.agreed * deal.commissionRate) / 100) : 0;
+  const commissionDue = finished ? potentialCommission : 0;
+  const commissionPending = !finished ? Math.max(0, potentialCommission - commissionPaid) : 0;
   return {
     received,
     remaining: Math.max(0, deal.agreed - received),
     commissionDue,
     commissionPaid,
+    commissionPending,
     commissionOwed: Math.max(0, commissionDue - commissionPaid),
   };
 }

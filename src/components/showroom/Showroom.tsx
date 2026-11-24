@@ -1,14 +1,15 @@
 import type { Slots } from "@/types/slots";
+import type { SiteContent } from "@/types/site-content";
 import { ShowroomProviders } from "./Providers";
 
 /**
  * Renders the Showroom from a map of slots. Main and every variant use this same
  * component, so any slot can be swapped without touching the page structure.
  */
-export function Showroom({ slots }: { slots: Slots }) {
+export function Showroom({ slots, content }: { slots: Slots; content?: SiteContent }) {
   const { Nav, Stage, Hero, About, Services, Schools, Work, Referral, Partners, Join, Footer, WhatsAppFab, RegistrationPanel } = slots;
   return (
-    <ShowroomProviders>
+    <ShowroomProviders content={content}>
       <Nav />
       <Stage />
       <main id="top" data-inert-on-modal className="relative z-[1]">

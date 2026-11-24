@@ -26,28 +26,35 @@ function InviteForm({ onClose }: { onClose: () => void }) {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<Role>("sales");
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState(false);
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
+    if (saving) return;
     const next: Record<string, string> = {};
     if (name.trim().length < 2) next.name = "Enter their name.";
     if (!emailOk(email)) next.email = "That email looks incomplete. Check the @ and the dot.";
     else if (db.staff.some((s) => s.email === email.trim().toLowerCase())) next.email = "This person is already on the team.";
     setErrors(next);
     if (Object.keys(next).length) return;
-    await teamApi.invite({ name: name.trim(), email: email.trim(), role });
-    toast(`Invite sent to ${email.trim()}.`);
-    onClose();
+    setSaving(true);
+    try {
+      await teamApi.invite({ name: name.trim(), email: email.trim(), role });
+      toast(`Invite sent to ${email.trim()}.`);
+      onClose();
+    } finally {
+      setSaving(false);
+    }
   };
   return (
-    <form onSubmit={submit} noValidate className="flex flex-col gap-4">
-      <Field id="i-name" label="Name" error={errors.name}><input id="i-name" className={inputCls} value={name} onChange={(e) => setName(e.target.value)} aria-invalid={!!errors.name} /></Field>
-      <Field id="i-email" label="Email" error={errors.email}><input id="i-email" type="email" className={inputCls} value={email} onChange={(e) => setEmail(e.target.value)} aria-invalid={!!errors.email} /></Field>
+    <form onSubmit={submit} noValidate aria-busy={saving} className="flex flex-col gap-4">
+      <Field id="i-name" label="Name" error={errors.name}><input id="i-name" className={inputCls} value={name} disabled={saving} onChange={(e) => setName(e.target.value)} aria-invalid={!!errors.name} /></Field>
+      <Field id="i-email" label="Email" error={errors.email}><input id="i-email" type="email" className={inputCls} value={email} disabled={saving} onChange={(e) => setEmail(e.target.value)} aria-invalid={!!errors.email} /></Field>
       <Field id="i-role" label="Role" hint={ROLES.find((r) => r.id === role)?.blurb}>
-        <select id="i-role" className={inputCls} value={role} onChange={(e) => setRole(e.target.value as Role)}>{ROLES.map((r) => <option key={r.id} value={r.id}>{r.label}</option>)}</select>
+        <select id="i-role" className={inputCls} value={role} disabled={saving} onChange={(e) => setRole(e.target.value as Role)}>{ROLES.map((r) => <option key={r.id} value={r.id}>{r.label}</option>)}</select>
       </Field>
       <div className="text-sm text-ink/70">They get an email to choose a password and set up an authenticator app. Nobody can sign up on their own.</div>
-      <div className="flex justify-end gap-2"><button type="button" className={btn("ghost")} onClick={onClose}>Cancel</button><button type="submit" className={btn("brand")}>Send invite</button></div>
+      <div className="flex justify-end gap-2"><button type="button" className={btn("ghost")} onClick={onClose} disabled={saving}>Cancel</button><button type="submit" className={btn("brand")} disabled={saving} aria-busy={saving}>{saving ? "Sending…" : "Send invite"}</button></div>
     </form>
   );
 }
@@ -61,14 +68,21 @@ export function TeamScreen() {
   const me = useSession();
   const [inviting, setInviting] = useState(false);
   const [removing, setRemoving] = useState<Staff | null>(null);
+  const [rolePendingIds, setRolePendingIds] = useState<string[]>([]);
   if (!me) return null;
 
   const changeRole = async (s: Staff, role: Role) => {
-    const ok = await teamApi.setRole(s.id, role);
-    toast(ok ? `${s.name} is now ${roleLabel(role)}.` : "The team needs at least one Owner.", ok ? "ok" : "error");
+    if (s.id === me.id || rolePendingIds.includes(s.id) || removing?.id === s.id) return;
+    setRolePendingIds((ids) => [...ids, s.id]);
+    try {
+      const ok = await teamApi.setRole(s.id, role);
+      toast(ok ? `${s.name} is now ${roleLabel(role)}.` : "The team needs at least one Owner.", ok ? "ok" : "error");
+    } finally {
+      setRolePendingIds((ids) => ids.filter((id) => id !== s.id));
+    }
   };
   const confirmRemove = async () => {
-    if (!removing) return;
+    if (!removing || rolePendingIds.includes(removing.id)) return;
     const ok = await teamApi.remove(removing.id);
     toast(ok ? `${removing.name} was removed.` : "The team needs at least one Owner.", ok ? "ok" : "error");
     setRemoving(null);
@@ -87,10 +101,11 @@ export function TeamScreen() {
               </span>
               <Badge tone={s.status === "active" ? "green" : "sun"}>{s.status === "active" ? "Active" : "Invited"}</Badge>
               <span className="w-28 text-sm text-ink/70">{s.lastSeen ? timeAgo(s.lastSeen) : "Not signed in yet"}</span>
-              <select aria-label={`Role of ${s.name}`} className={`${inputCls} !w-auto`} value={s.role} disabled={s.id === me.id} onChange={(e) => void changeRole(s, e.target.value as Role)}>
+              <select aria-label={`Role of ${s.name}`} className={`${inputCls} !w-auto`} value={s.role} disabled={s.id === me.id || rolePendingIds.includes(s.id) || removing?.id === s.id} aria-busy={rolePendingIds.includes(s.id)} onChange={(e) => void changeRole(s, e.target.value as Role)}>
                 {ROLES.map((r) => <option key={r.id} value={r.id}>{r.label}</option>)}
               </select>
-              {s.id !== me.id ? <button type="button" className={btn("ghost", "sm", "!px-2")} aria-label={`Remove ${s.name}`} onClick={() => setRemoving(s)}><Icon name="trash" size={18} /></button> : <span className="w-9" />}
+              {rolePendingIds.includes(s.id) && <span role="status" className="text-sm text-ink/70"><span className="sr-only">Role of {s.name}: </span>Saving…</span>}
+              {s.id !== me.id ? <button type="button" className={btn("ghost", "sm", "!px-2")} aria-label={`Remove ${s.name}`} disabled={rolePendingIds.includes(s.id) || removing?.id === s.id} onClick={() => { if (!rolePendingIds.includes(s.id) && !removing) setRemoving(s); }}><Icon name="trash" size={18} /></button> : <span className="w-9" />}
             </li>
           ))}
         </ul>

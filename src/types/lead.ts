@@ -29,6 +29,7 @@ export type LeadPayload = {
   consent: boolean;
   context: string | null;
   company?: string;
+  ref?: string | null;
 };
 
 export type LeadResult = { ok: true; returning: boolean } | { ok: false; error: string };
