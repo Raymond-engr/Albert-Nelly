@@ -22,24 +22,17 @@ function ServiceEditor({ service, canEdit }: { service: ServiceItem; canEdit: bo
   const [price, setPrice] = useState<PriceDisplay>(service.price);
   const [priceOk, setPriceOk] = useState(true);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [saving, setSaving] = useState(false);
 
   const save = async (e: FormEvent) => {
     e.preventDefault();
-    if (saving) return;
     const next: Record<string, string> = {};
     if (title.trim().length < 3) next.title = "Give the service a name.";
     if (description.trim().length < 5) next.description = "Write one short line about it.";
     if (audience.trim().length < 3) next.audience = "Say who it suits.";
     setErrors(next);
     if (Object.keys(next).length || !priceOk) return;
-    setSaving(true);
-    try {
-      await servicesApi.update(service.id, { title: title.trim(), description: description.trim(), audience: audience.trim(), badge: badge.trim(), published, price });
-      toast("Service saved.");
-    } finally {
-      setSaving(false);
-    }
+    await servicesApi.update(service.id, { title: title.trim(), description: description.trim(), audience: audience.trim(), badge: badge.trim(), published, price });
+    toast("Service saved.");
   };
 
   return (
@@ -55,7 +48,7 @@ function ServiceEditor({ service, canEdit }: { service: ServiceItem; canEdit: bo
             <Switch checked={published} onChange={setPublished} label="Show on the site" disabled={!canEdit} />
             <span className="text-[15px]">{published ? "Shown on the site" : "Hidden from the site"}</span>
           </div>
-          {canEdit ? <div><button type="submit" className={btn("brand")} disabled={!priceOk || saving} aria-busy={saving}>{saving ? "Saving…" : "Save service"}</button></div> : <div className="rounded-xl bg-sun/20 p-3 text-sm">Your role can view prices but not change them.</div>}
+          {canEdit ? <div><button type="submit" className={btn("brand")} disabled={!priceOk}>Save service</button></div> : <div className="rounded-xl bg-sun/20 p-3 text-sm">Your role can view prices but not change them.</div>}
         </form>
       </Card>
       <div className="xl:sticky xl:top-6 xl:self-start">

@@ -2,8 +2,7 @@ import { site } from "@/data/site";
 import { NOT_SURE } from "@/data/registration";
 import type { LeadType, LeadValues } from "@/types/lead";
 
-export const waLink = (message: string, numberOverride?: string) =>
-  `https://wa.me/${numberOverride || site.whatsappNumber}?text=${encodeURIComponent(message)}`;
+export const waLink = (message: string) => `https://wa.me/${site.whatsappNumber}?text=${encodeURIComponent(message)}`;
 
 /** The first WhatsApp message, prefilled. The visitor still has to tap Send. */
 export function leadMessage(type: LeadType, v: LeadValues, ctx: string): string {

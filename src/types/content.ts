@@ -28,7 +28,6 @@ export type WorkItem = {
   title: string;
   challenge: string;
   result: string;
-  imagePath?: string | null;
   // Optional fields used by variant two. Every other part ignores them.
   /** Design: the device the screens sit in. Defaults to phone. */
   frame?: "phone" | "laptop";

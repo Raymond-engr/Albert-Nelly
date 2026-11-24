@@ -24,12 +24,10 @@ function ReferrerForm({ item, canEdit, onClose }: { item: Referrer | null; canEd
   const [rate, setRate] = useState(item ? String(item.rate) : String(db.settings.commissionMin));
   const [status, setStatus] = useState<Referrer["status"]>(item?.status ?? "active");
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [saving, setSaving] = useState(false);
   const { commissionMin, commissionMax } = db.settings;
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
-    if (saving) return;
     const next: Record<string, string> = {};
     const pct = Number(rate);
     if (name.trim().length < 2) next.name = "Enter the referrer’s name.";
@@ -39,15 +37,10 @@ function ReferrerForm({ item, canEdit, onClose }: { item: Referrer | null; canEd
     setErrors(next);
     if (Object.keys(next).length) return;
     const data = { name: name.trim(), email: email.trim().toLowerCase(), whatsapp: whatsapp.replace(/\D/g, ""), rate: pct, status };
-    setSaving(true);
-    try {
-      if (item) await referrersApi.update(item.id, data);
-      else await referrersApi.create(data);
-      toast(item ? "Referrer saved." : "Referrer added.");
-      onClose?.();
-    } finally {
-      setSaving(false);
-    }
+    if (item) await referrersApi.update(item.id, data);
+    else await referrersApi.create(data);
+    toast(item ? "Referrer saved." : "Referrer added.");
+    onClose?.();
   };
 
   const pct = Number(rate);
@@ -63,7 +56,7 @@ function ReferrerForm({ item, canEdit, onClose }: { item: Referrer | null; canEd
       <Field id="r-status" label="Status">
         <select id="r-status" className={inputCls} value={status} disabled={!canEdit} onChange={(e) => setStatus(e.target.value as Referrer["status"])}><option value="active">Active</option><option value="paused">Paused</option></select>
       </Field>
-      {canEdit && <div className="flex justify-end gap-2">{onClose && <button type="button" className={btn("ghost")} onClick={onClose} disabled={saving}>Cancel</button>}<button type="submit" className={btn("brand")} disabled={saving} aria-busy={saving}>{saving ? "Saving…" : item ? "Save referrer" : "Add referrer"}</button></div>}
+      {canEdit && <div className="flex justify-end gap-2">{onClose && <button type="button" className={btn("ghost")} onClick={onClose}>Cancel</button>}<button type="submit" className={btn("brand")}>{item ? "Save referrer" : "Add referrer"}</button></div>}
     </form>
   );
 }
@@ -71,63 +64,15 @@ function ReferrerForm({ item, canEdit, onClose }: { item: Referrer | null; canEd
 function ReferrerDetail({ referrer, canEdit, money }: { referrer: Referrer; canEdit: boolean; money: boolean }) {
   const db = useDb();
   const deals = db.deals.filter((d) => d.referrerId === referrer.id);
-  const leads = db.leads.filter((l) => l.referrerId === referrer.id);
-  const [copied, setCopied] = useState(false);
-
-  const referralUrl = typeof window !== "undefined"
-    ? `${window.location.origin}/?ref=${referrer.id}`
-    : `https://albertnelly.com/?ref=${referrer.id}`;
-
-  const copyLink = async () => {
-    try {
-      await navigator.clipboard.writeText(referralUrl);
-      setCopied(true);
-      toast("Referral link copied to clipboard.");
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      toast("Failed to copy referral link.");
-    }
-  };
-
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-wrap gap-2">
         <a className={btn("outline", "sm")} href={`https://wa.me/${referrer.whatsapp}`} target="_blank" rel="noopener noreferrer"><Icon name="chat" size={16} /> <span className="ml-1.5">WhatsApp</span></a>
         <a className={btn("outline", "sm")} href={`mailto:${referrer.email}`}><Icon name="mail" size={16} /> <span className="ml-1.5">Email</span></a>
-        <button type="button" className={btn("outline", "sm")} onClick={copyLink}>
-          <Icon name={copied ? "check" : "link"} size={16} />
-          <span className="ml-1.5">{copied ? "Copied link!" : "Copy referral link"}</span>
-        </button>
       </div>
-
-      <div className="rounded-xl border border-line bg-mint/30 p-3 text-xs text-ink/80">
-        <span className="font-semibold text-ink">Referral tracking link:</span>
-        <code className="mt-1 block truncate rounded border border-line/60 bg-card px-2 py-1 font-mono text-[11px] text-ink select-all">
-          {referralUrl}
-        </code>
-      </div>
-
       <ReferrerForm key={referrer.id} item={referrer} canEdit={canEdit} />
-
       <div className="border-t border-line pt-4">
-        <h3 className="mb-2 font-display text-base font-semibold">Introduced leads ({leads.length})</h3>
-        {leads.length === 0 ? <div className="text-sm text-ink/70">No leads captured via their referral link yet.</div> : (
-          <ul className="m-0 list-none divide-y divide-line p-0">
-            {leads.map((l) => (
-              <li key={l.id} className="flex items-center justify-between gap-3 py-2 text-sm">
-                <div>
-                  <span className="font-medium text-ink">{l.name}</span>
-                  <span className="ml-2 text-xs text-ink/60">({l.service || "General"})</span>
-                </div>
-                <Badge tone={l.status === "deal" ? "green" : "neutral"}>{l.status}</Badge>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-
-      <div className="border-t border-line pt-4">
-        <h3 className="mb-2 font-display text-base font-semibold">Deals they introduced ({deals.length})</h3>
+        <h3 className="mb-2 font-display text-base font-semibold">Deals they introduced</h3>
         {deals.length === 0 ? <div className="text-sm text-ink/70">No deals yet.</div> : (
           <ul className="m-0 list-none divide-y divide-line p-0">
             {deals.map((d) => {
@@ -136,11 +81,7 @@ function ReferrerDetail({ referrer, canEdit, money }: { referrer: Referrer; canE
                 <li key={d.id} className="flex items-center justify-between gap-3 py-2.5">
                   <div className="min-w-0">
                     <Link href={`/control-room/deals/${d.id}`} className="block truncate text-[15px] font-semibold">{d.title}</Link>
-                    <div className="text-sm text-ink/70">
-                      {d.agreed ? naira(d.agreed) : "No price yet"}
-                      {money && bal.commissionOwed > 0 && <span className="ml-1 text-green-700 font-medium">({naira(bal.commissionOwed)} owed)</span>}
-                      {money && bal.commissionPending > 0 && <span className="ml-1 text-sun font-medium">({naira(bal.commissionPending)} pending delivery)</span>}
-                    </div>
+                    <div className="text-sm text-ink/70">{d.agreed ? naira(d.agreed) : "No price yet"}{money && bal.commissionOwed > 0 ? `, ${naira(bal.commissionOwed)} owed` : ""}</div>
                   </div>
                   <Badge tone={STAGE_TONE[d.stage]}>{DEAL_STAGE_LABEL[d.stage]}</Badge>
                 </li>

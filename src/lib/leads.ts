@@ -3,12 +3,6 @@ import { normalizeWa } from "@/lib/validation";
 import type { LeadPayload, LeadResult, LeadType, LeadValues } from "@/types/lead";
 
 export function toPayload(type: LeadType, v: LeadValues, ctx: string): LeadPayload {
-  let ref: string | null = null;
-  if (typeof window !== "undefined") {
-    const params = new URLSearchParams(window.location.search);
-    ref = params.get("ref");
-  }
-
   return {
     type,
     name: v.name.trim(),
@@ -22,7 +16,6 @@ export function toPayload(type: LeadType, v: LeadValues, ctx: string): LeadPaylo
     consent: v.consent,
     context: ctx || null,
     company: v.company,
-    ref,
   };
 }
 

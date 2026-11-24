@@ -51,7 +51,6 @@ export function validatePayload(raw: unknown): { ok: true; data: LeadPayload } |
       consent: true,
       context: str(b.context, 160),
       company: typeof b.company === "string" ? b.company : "",
-      ref: str(b.ref, 64),
     },
   };
 }

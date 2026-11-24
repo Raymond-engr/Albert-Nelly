@@ -1,12 +1,10 @@
 "use client";
 
-import { useState, useRef, type FormEvent, type ChangeEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { workApi } from "@/lib/control-room/content-api";
-import { call } from "@/lib/control-room/http";
 import { can } from "@/lib/control-room/roles";
 import { useDb, useSession } from "@/lib/control-room/store";
 import { toast } from "@/lib/control-room/toast";
-import { validateUpload, getPublicMediaUrl } from "@/lib/media";
 import type { WorkItem } from "@/lib/control-room/types";
 import { ConfirmModal } from "../ui/ConfirmModal";
 import { Field, inputCls } from "../ui/Field";
@@ -22,42 +20,7 @@ function WorkForm({ item, onClose }: { item: WorkItem | null; onClose: () => voi
   const [challenge, setChallenge] = useState(item?.challenge ?? "");
   const [result, setResult] = useState(item?.result ?? "");
   const [published, setPublished] = useState(item?.published ?? true);
-  const [imagePath, setImagePath] = useState<string | null>(item?.imagePath ?? null);
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(item?.imagePath ? getPublicMediaUrl(item.imagePath) : null);
-  const [imageWarning, setImageWarning] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const validation = validateUpload("work", file.type, file.size);
-    if (!validation.valid) {
-      setErrors((prev) => ({ ...prev, image: validation.error || "Invalid file" }));
-      return;
-    }
-
-    setErrors((prev) => {
-      const copy = { ...prev };
-      delete copy.image;
-      return copy;
-    });
-
-    setImageWarning(validation.warning || null);
-    setImageFile(file);
-    setPreviewUrl(URL.createObjectURL(file));
-  };
-
-  const handleRemoveImage = () => {
-    setImageFile(null);
-    setPreviewUrl(null);
-    setImagePath(null);
-    setImageWarning(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  };
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -67,120 +30,30 @@ function WorkForm({ item, onClose }: { item: WorkItem | null; onClose: () => voi
     if (result.trim().length < 2) next.result = "Add one result, ideally with a number.";
     setErrors(next);
     if (Object.keys(next).length) return;
-
-    setSaving(true);
-    try {
-      let finalImagePath = imagePath;
-
-      if (imageFile) {
-        const entityId = item?.id || `work-${Date.now()}`;
-        const uploadRes = await call<{ signedUrl: string; path: string }>(
-          "POST",
-          "/api/control-room/uploads",
-          {
-            entityType: "work",
-            entityId,
-            contentType: imageFile.type,
-            size: imageFile.size,
-          }
-        );
-
-        if (uploadRes?.signedUrl) {
-          await fetch(uploadRes.signedUrl, {
-            method: "PUT",
-            headers: { "Content-Type": imageFile.type },
-            body: imageFile,
-          });
-          finalImagePath = uploadRes.path;
-        }
-      }
-
-      const data = {
-        title: title.trim(),
-        category,
-        challenge: challenge.trim(),
-        result: result.trim(),
-        published,
-        imagePath: finalImagePath,
-      };
-
-      if (item) await workApi.update(item.id, data);
-      else await workApi.create(data);
-
-      toast(item ? "Project saved." : "Project added.");
-      onClose();
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to save project.";
-      setErrors((prev) => ({ ...prev, form: msg }));
-    } finally {
-      setSaving(false);
-    }
+    const data = { title: title.trim(), category, challenge: challenge.trim(), result: result.trim(), published };
+    if (item) await workApi.update(item.id, data);
+    else await workApi.create(data);
+    toast(item ? "Project saved." : "Project added.");
+    onClose();
   };
 
   return (
     <form onSubmit={submit} noValidate className="flex flex-col gap-4">
-      {errors.form && <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{errors.form}</div>}
-      <Field id="w-title" label="Project name" error={errors.title}>
-        <input id="w-title" className={inputCls} value={title} onChange={(e) => setTitle(e.target.value)} aria-invalid={!!errors.title} />
-      </Field>
+      <Field id="w-title" label="Project name" error={errors.title}><input id="w-title" className={inputCls} value={title} onChange={(e) => setTitle(e.target.value)} aria-invalid={!!errors.title} /></Field>
       <Field id="w-cat" label="Type">
-        <select id="w-cat" className={inputCls} value={category} onChange={(e) => setCategory(e.target.value as WorkItem["category"])}>
-          <option>Design</option>
-          <option>Development</option>
-        </select>
+        <select id="w-cat" className={inputCls} value={category} onChange={(e) => setCategory(e.target.value as WorkItem["category"])}><option>Design</option><option>Development</option></select>
       </Field>
-      <Field id="w-chal" label="The challenge" hint="One line on the problem." error={errors.challenge}>
-        <input id="w-chal" className={inputCls} value={challenge} onChange={(e) => setChallenge(e.target.value)} aria-invalid={!!errors.challenge} />
-      </Field>
-      <Field id="w-res" label="The result" hint="One result, ideally with a number." error={errors.result}>
-        <input id="w-res" className={inputCls} value={result} onChange={(e) => setResult(e.target.value)} aria-invalid={!!errors.result} />
-      </Field>
-
-      {/* Image attachment & preview */}
-      <Field id="w-image" label="Project screenshot (16:10, max 500 KB)" error={errors.image}>
-        {previewUrl ? (
-          <div className="flex flex-col gap-2">
-            <div className="relative aspect-[16/10] w-full max-w-sm overflow-hidden rounded-xl border border-line bg-cloud">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={previewUrl} alt="Screenshot preview" className="size-full object-cover" />
-            </div>
-            <div className="flex items-center gap-2">
-              <label className={btn("outline", "sm") + " cursor-pointer"}>
-                Replace screenshot
-                <input ref={fileInputRef} type="file" accept="image/webp,image/png,image/jpeg" className="hidden" onChange={handleFileChange} />
-              </label>
-              <button type="button" className={btn("ghost", "sm")} onClick={handleRemoveImage}>
-                Remove
-              </button>
-            </div>
-          </div>
-        ) : (
-          <label className="flex aspect-[16/10] max-w-sm cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-line bg-cloud/50 hover:bg-cloud transition p-4 text-center">
-            <span className="text-ink/60 mb-2"><Icon name="image" size={24} /></span>
-            <span className="text-sm font-semibold">Upload screenshot</span>
-            <span className="text-xs text-ink/60 mt-1">WebP, PNG, or JPEG under 500 KB (150 KB recommended)</span>
-            <input ref={fileInputRef} type="file" accept="image/webp,image/png,image/jpeg" className="hidden" onChange={handleFileChange} />
-          </label>
-        )}
-        {imageWarning && <p className="mt-1 text-xs text-sun">{imageWarning}</p>}
-      </Field>
-
-      <div className="flex items-center gap-3">
-        <Switch checked={published} onChange={setPublished} label="Show on the site" />
-        <span className="text-[15px]">{published ? "Shown on the site" : "Hidden from the site"}</span>
-      </div>
-      <div className="flex justify-end gap-2">
-        <button type="button" className={btn("ghost")} onClick={onClose} disabled={saving}>Cancel</button>
-        <button type="submit" className={btn("brand")} disabled={saving}>
-          {saving ? "Saving..." : item ? "Save project" : "Add project"}
-        </button>
-      </div>
+      <Field id="w-chal" label="The challenge" hint="One line on the problem." error={errors.challenge}><input id="w-chal" className={inputCls} value={challenge} onChange={(e) => setChallenge(e.target.value)} aria-invalid={!!errors.challenge} /></Field>
+      <Field id="w-res" label="The result" hint="One result, ideally with a number." error={errors.result}><input id="w-res" className={inputCls} value={result} onChange={(e) => setResult(e.target.value)} aria-invalid={!!errors.result} /></Field>
+      <div className="flex items-center gap-3"><Switch checked={published} onChange={setPublished} label="Show on the site" /><span className="text-[15px]">{published ? "Shown on the site" : "Hidden from the site"}</span></div>
+      <div className="flex justify-end gap-2"><button type="button" className={btn("ghost")} onClick={onClose}>Cancel</button><button type="submit" className={btn("brand")}>{item ? "Save project" : "Add project"}</button></div>
     </form>
   );
 }
 
 /**
- * Selected Work: projects shown as cards with screenshot support.
+ * Selected Work: four to six projects the site shows as cards. Toggle one off to hide it without deleting it.
+ * TODO(integration): `work_items` table plus a screenshot upload (Supabase Storage). Case pages are a later design task.
  */
 export function WorkScreen() {
   const db = useDb();
@@ -211,12 +84,6 @@ export function WorkScreen() {
           <ul className="m-0 list-none divide-y divide-line p-0">
             {list.map((w) => (
               <li key={w.id} className="flex flex-wrap items-center gap-x-4 gap-y-3 px-4 py-4">
-                {w.imagePath && (
-                  <div className="size-12 shrink-0 overflow-hidden rounded-lg border border-line bg-cloud">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={getPublicMediaUrl(w.imagePath) || ""} alt="" className="size-full object-cover" />
-                  </div>
-                )}
                 <div className="min-w-0 flex-1 basis-64">
                   <div className="flex flex-wrap items-center gap-2"><span className="text-[15px] font-semibold">{w.title}</span><Badge tone="neutral">{w.category}</Badge></div>
                   <div className="text-sm text-ink/70">{w.challenge}</div>

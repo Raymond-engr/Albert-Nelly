@@ -6,7 +6,6 @@ import { toPayload, submitLead } from "@/lib/leads";
 import { validateValues, type FieldErrors, type FieldKey } from "@/lib/validation";
 import { leadMessage, waLink } from "@/lib/whatsapp";
 import { useRegistration } from "@/providers/RegistrationProvider";
-import { useSiteContent } from "@/providers/SiteContentProvider";
 import type { LeadType, LeadValues } from "@/types/lead";
 
 export type FlowStep = "pick" | "form" | "done" | "updated";
@@ -27,14 +26,10 @@ export function useRegistrationFlow() {
   const [errors, setErrors] = useState<FieldErrors>({});
   const [saving, setSaving] = useState(false);
   const [netError, setNetError] = useState("");
-  const { whatsappNumber } = useSiteContent();
   const [returning, setReturning] = useState(false);
   const [seconds, setSeconds] = useState(COUNTDOWN_SECONDS);
 
-  const href = useMemo(
-    () => (type ? waLink(leadMessage(type, values, session.ctx), whatsappNumber) : ""),
-    [type, values, session.ctx, whatsappNumber]
-  );
+  const href = useMemo(() => (type ? waLink(leadMessage(type, values, session.ctx)) : ""), [type, values, session.ctx]);
 
   // Countdown, then try to open WhatsApp. If the browser blocks it, the big button is still on screen.
   useEffect(() => {

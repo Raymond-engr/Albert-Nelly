@@ -8,6 +8,3 @@ build
 next-env.d.ts
 *.tsbuildinfo
 .DS_Store
-.agent*
-supabase/.temp/
-

@@ -18,15 +18,14 @@ import { NewDealModal } from "./NewDealModal";
 
 const STAGES = Object.keys(DEAL_STAGE_LABEL) as DealStage[];
 
-function DealCard({ deal, owner, referrer, paid, canEdit, dragging, moving, onDragStart, onDragEnd, onMove }: {
-  deal: Deal; owner: string; referrer: string | null; paid: number | null; canEdit: boolean; dragging: boolean; moving: boolean;
+function DealCard({ deal, owner, referrer, paid, canEdit, dragging, onDragStart, onDragEnd, onMove }: {
+  deal: Deal; owner: string; referrer: string | null; paid: number | null; canEdit: boolean; dragging: boolean;
   onDragStart: () => void; onDragEnd: () => void; onMove: (s: DealStage) => void;
 }) {
   const pct = paid !== null && deal.agreed > 0 ? Math.min(100, Math.round((paid / deal.agreed) * 100)) : null;
   return (
     <li
-      draggable={canEdit && !moving}
-      aria-busy={moving}
+      draggable={canEdit}
       onDragStart={(e) => {
         e.dataTransfer.setData("text/plain", deal.id);
         e.dataTransfer.effectAllowed = "move";
@@ -54,12 +53,10 @@ function DealCard({ deal, owner, referrer, paid, canEdit, dragging, moving, onDr
           {referrer && <Badge tone="sun">via {referrer}</Badge>}
         </div>
       </Link>
-      {moving && <div role="status" className="mt-2 text-xs text-ink/70">Updating stage…</div>}
       {canEdit && (
         <select
           aria-label={`Move ${deal.title} to another stage`}
           value={deal.stage}
-          disabled={moving}
           onChange={(e) => onMove(e.target.value as DealStage)}
           className="sr-only mt-2 w-full rounded-lg border border-line bg-paper px-2 py-1.5 text-sm text-ink focus:not-sr-only pointer-coarse:not-sr-only"
         >
@@ -83,7 +80,6 @@ export function DealsBoard() {
   const [dragId, setDragId] = useState<string | null>(null);
   const [over, setOver] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
-  const [movingIds, setMovingIds] = useState<string[]>([]);
   if (!staff) return null;
 
   const canEdit = can(staff.role, "deals", "edit");
@@ -98,14 +94,9 @@ export function DealsBoard() {
 
   const move = async (id: string, stage: DealStage) => {
     const d = db.deals.find((x) => x.id === id);
-    if (!d || d.stage === stage || movingIds.includes(id)) return;
-    setMovingIds((ids) => [...ids, id]);
-    try {
-      await dealsApi.move(id, stage);
-      toast(`Moved to ${DEAL_STAGE_LABEL[stage]}.`);
-    } finally {
-      setMovingIds((ids) => ids.filter((movingId) => movingId !== id));
-    }
+    if (!d || d.stage === stage) return;
+    await dealsApi.move(id, stage);
+    toast(`Moved to ${DEAL_STAGE_LABEL[stage]}.`);
   };
   const drop = (stages: DealStage[]) => {
     const d = db.deals.find((x) => x.id === dragId);
@@ -162,7 +153,6 @@ export function DealsBoard() {
                         paid={bal ? bal.received : null}
                         canEdit={canEdit}
                         dragging={dragId === d.id}
-                        moving={movingIds.includes(d.id)}
                         onDragStart={() => setDragId(d.id)}
                         onDragEnd={() => { setDragId(null); setOver(null); }}
                         onMove={(s) => void move(d.id, s)}

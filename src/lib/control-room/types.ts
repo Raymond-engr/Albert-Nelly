@@ -13,7 +13,7 @@ export type IconName =
   | "arrowDown" | "chat" | "edit" | "trash";
 
 export type Role = "owner" | "finance" | "sales" | "content";
-export type Staff = { id: string; name: string; email: string; role: Role; status: "active" | "invited" | "disabled"; lastSeen: string | null };
+export type Staff = { id: string; name: string; email: string; role: Role; status: "active" | "invited"; lastSeen: string | null };
 
 export type LeadStatus = "new" | "contacted" | "deal" | "archived";
 export type Lead = {
@@ -37,7 +37,6 @@ export type Lead = {
   tags: string[];
   dealId: string | null;
   ownerId: string | null;
-  referrerId?: string | null;
 };
 
 export type DealStage = "new" | "conversation" | "quote" | "deposit" | "progress" | "delivered" | "closed" | "lost";
@@ -94,7 +93,7 @@ export type Campaign = {
   template: "welcome" | "birthday" | "promo";
   audience: string;
   audienceSize: number;
-  status: "draft" | "scheduled" | "sending" | "sent" | "automated";
+  status: "draft" | "scheduled" | "sent" | "automated";
   scheduledFor: string | null;
   sentAt: string | null;
   stats: { delivered: number; opened: number; clicked: number } | null;
@@ -118,11 +117,9 @@ export type PackageTier = {
 export type RunningCost = { id: string; item: string; amount: number };
 export type WorkItem = {
   id: string; category: "Design" | "Development"; title: string; challenge: string; result: string; published: boolean;
-  imagePath?: string | null;
 };
 export type Partner = {
   id: string; name: string; category: string; note: string; link: string; status: "active" | "pending"; published: boolean;
-  logoPath?: string | null;
 };
 export type Referrer = {
   id: string; name: string; email: string; whatsapp: string; rate: number; status: "active" | "paused"; joinedAt: string;

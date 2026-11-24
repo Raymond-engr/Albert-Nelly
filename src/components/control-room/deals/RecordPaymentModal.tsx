@@ -39,13 +39,10 @@ function PaymentForm({ deal, remaining, suggestion, onClose }: { deal: Deal; rem
     setErrors(next);
     if (Object.keys(next).length || !value) return;
     setSaving(true);
-    try {
-      await paymentsApi.record({ dealId: deal.id, direction, amount: value, category, date, note: note.trim() });
-      toast(`${direction === "in" ? "Payment in" : "Payment out"} recorded.`);
-      onClose();
-    } finally {
-      setSaving(false);
-    }
+    await paymentsApi.record({ dealId: deal.id, direction, amount: value, category, date, note: note.trim() });
+    setSaving(false);
+    toast(`${direction === "in" ? "Payment in" : "Payment out"} recorded.`);
+    onClose();
   };
 
   return (
