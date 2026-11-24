@@ -125,7 +125,8 @@ export function Shell({ children }: { children: ReactNode }) {
         { event: "INSERT", schema: "public", table: "leads" },
         (payload) => {
           const lead = payload.new as { name?: string; service?: string };
-          toast(`New lead: ${lead.name ?? "someone"} — ${lead.service ?? ""}`, "ok");
+          const detail = [lead.name, lead.service].filter(Boolean).join(" — ");
+          toast(`New lead: ${detail || "someone"}`, "ok");
           void refresh();
         }
       )

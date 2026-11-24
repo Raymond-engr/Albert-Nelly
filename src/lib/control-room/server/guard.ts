@@ -1,5 +1,6 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
+import { getAdminClient } from "@/lib/supabase/admin";
 import { can, type Area } from "@/lib/control-room/roles";
 import type { Staff } from "@/lib/control-room/types";
 
@@ -53,8 +54,10 @@ export async function requireStaff(area: Area, need: "view" | "edit" = "view") {
   const last = seenAt.get(staff.id) ?? 0;
   if (now - last > SEEN_THROTTLE_MS) {
     seenAt.set(staff.id, now);
+    const admin = getAdminClient();
+    const presenceClient = admin || supabase;
     void Promise.resolve(
-      supabase
+      presenceClient
         .from("staff")
         .update({ last_seen_at: new Date(now).toISOString() })
         .eq("id", staff.id)

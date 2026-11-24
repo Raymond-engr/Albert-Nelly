@@ -55,7 +55,7 @@ export async function GET() {
       supabase.from("leads").select("*").order("created_at", { ascending: false }),
       supabase.from("deals").select("*").order("created_at", { ascending: false }),
       redactPayments ? Promise.resolve({ data: [] }) : supabase.from("payments").select("*").order("created_at", { ascending: false }),
-      supabase.from("campaigns").select("*").order("created_at", { ascending: false }),
+      supabase.from("campaigns").select("*").order("updated_at", { ascending: false }),
       supabase.from("services").select("*").order("position"),
       supabase.from("packages").select("*").order("position"),
       supabase.from("running_costs").select("*").order("position"),
