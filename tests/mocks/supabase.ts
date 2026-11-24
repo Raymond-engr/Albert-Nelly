@@ -36,7 +36,18 @@ export function createMockSupabase(options?: {
     chain.update = vi.fn().mockReturnValue(chain);
     chain.delete = vi.fn().mockReturnValue(chain);
     chain.eq = vi.fn().mockReturnValue(chain);
+    chain.in = vi.fn().mockReturnValue(chain);
     chain.order = vi.fn().mockReturnValue(chain);
+    chain.limit = vi.fn().mockReturnValue(chain);
+    chain.maybeSingle = vi.fn().mockImplementation(() => {
+      if (table === "staff") {
+        if (!staff) return Promise.resolve({ data: null, error: null });
+        return Promise.resolve({ data: staff, error: null });
+      }
+      const custom = options?.queryResults?.[table];
+      if (custom) return Promise.resolve(custom);
+      return Promise.resolve({ data: { id: "test-id" }, error: null });
+    });
     chain.single = vi.fn().mockImplementation(() => {
       if (table === "staff") {
         if (!staff) return Promise.resolve({ data: null, error: { message: "Staff not found" } });
