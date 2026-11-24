@@ -141,9 +141,11 @@ export default function MfaEnrollmentPage() {
     setRetryKey((k) => k + 1);
   };
 
-  // Extract raw SVG if the QR code is an SVG data URI
-  const svgMarkup = qrCode?.startsWith("data:image/svg+xml;utf-8,")
-    ? qrCode.replace(/^data:image\/svg\+xml;utf-8,/, "")
+  // Extract raw SVG if the QR code is an SVG data URI or raw SVG markup
+  const svgMarkup = qrCode?.startsWith("<svg")
+    ? qrCode
+    : qrCode?.startsWith("data:image/svg+xml;utf-8,")
+    ? decodeURIComponent(qrCode.replace(/^data:image\/svg\+xml;utf-8,/, ""))
     : null;
 
   return (

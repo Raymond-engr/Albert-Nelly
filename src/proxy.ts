@@ -46,11 +46,15 @@ export async function proxy(request: NextRequest) {
   if (!user && pathname.startsWith("/control-room") && !isAuthPage) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = "/control-room/login";
-    return NextResponse.redirect(loginUrl);
+    const redirectResponse = NextResponse.redirect(loginUrl);
+    response.cookies.getAll().forEach((c) => redirectResponse.cookies.set(c));
+    return redirectResponse;
   }
 
   if (!user && pathname.startsWith("/api/control-room")) {
-    return NextResponse.json({ ok: false, error: "Sign in to continue." }, { status: 401 });
+    const jsonResponse = NextResponse.json({ ok: false, error: "Sign in to continue." }, { status: 401 });
+    response.cookies.getAll().forEach((c) => jsonResponse.cookies.set(c));
+    return jsonResponse;
   }
 
   return response;

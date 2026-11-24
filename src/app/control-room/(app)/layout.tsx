@@ -47,8 +47,8 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       throw e;
     }
 
-    // In dev mode with unconfigured Supabase, provide fallback staff
-    if (process.env.NODE_ENV !== "production") {
+    // In local dev with unconfigured Supabase, provide fallback staff
+    if (process.env.NODE_ENV === "development" && !process.env.NEXT_PUBLIC_SUPABASE_URL) {
       staff = {
         id: "staff_owner",
         name: "Albert (Dev)",
