@@ -1,11 +1,32 @@
 import { useSyncExternalStore } from "react";
-import { seedDb } from "./demo";
 import type { Db, Staff } from "./types";
+import { useStaff } from "@/components/control-room/shell/StaffProvider";
+
+export const initialDb: Db = {
+  staff: [],
+  leads: [],
+  deals: [],
+  payments: [],
+  campaigns: [],
+  services: [],
+  packages: [],
+  runningCosts: [],
+  work: [],
+  partners: [],
+  referrers: [],
+  templates: [],
+  settings: {
+    whatsappNumber: "",
+    birthdayDiscount: 10,
+    commissionMin: 5,
+    commissionMax: 10,
+  },
+  activity: [],
+};
 
 /**
- * The prototype's "database": one object kept in memory and in localStorage.
- * TODO(integration): delete this file. Replace useDb() with real data loading (server components or a client
- * cache such as SWR / React Query) and replace the functions in api.ts with fetch calls or Server Actions.
+ * The Control Room client cache: kept in memory and synchronized with localStorage.
+ * Hydrated from the backend snapshot via refreshDb().
  */
 type Store<T> = {
   get: () => T;
@@ -28,14 +49,14 @@ function createStore<T>(key: string, init: () => T): Store<T> {
       const raw = window.localStorage.getItem(key);
       if (raw) state = JSON.parse(raw) as T;
     } catch {
-      /* storage blocked or corrupted: keep the seed */
+      /* storage blocked or corrupted: keep initial */
     }
   };
   const save = () => {
     try {
       window.localStorage.setItem(key, JSON.stringify(state));
     } catch {
-      /* storage full or blocked: the prototype keeps working in memory */
+      /* storage full or blocked: keep working in memory */
     }
   };
   return {
@@ -65,16 +86,92 @@ function createStore<T>(key: string, init: () => T): Store<T> {
   };
 }
 
-export const dbStore = createStore<Db>("an-control-room-db-v1", seedDb);
+export const dbStore = createStore<Db>("an-control-room-db-v1", () => initialDb);
 export const sessionStore = createStore<{ staffId: string | null }>("an-control-room-session-v1", () => ({ staffId: null }));
+
+export type DbStatus = "loading" | "ready" | "error";
+
+type StatusState = {
+  status: DbStatus;
+  error: string | null;
+  isSyncing: boolean;
+  hasLoaded: boolean;
+};
+
+let statusState: StatusState = {
+  status: "loading",
+  error: null,
+  isSyncing: false,
+  hasLoaded: false,
+};
+const SERVER_STATUS: StatusState = {
+  status: "loading",
+  error: null,
+  isSyncing: false,
+  hasLoaded: false,
+};
+const statusListeners = new Set<() => void>();
+const emitStatus = () => statusListeners.forEach((l) => l());
+
+export function useDbStatus(): StatusState {
+  return useSyncExternalStore(
+    (listener) => {
+      statusListeners.add(listener);
+      return () => {
+        statusListeners.delete(listener);
+      };
+    },
+    () => statusState,
+    () => SERVER_STATUS
+  );
+}
+
+export async function refreshDb(): Promise<void> {
+  // If we already loaded initial data, keep status as 'ready' and only set isSyncing = true.
+  // Setting status back to 'loading' unmounts all children and causes full-page UI flicker on save.
+  if (statusState.hasLoaded) {
+    statusState = { ...statusState, isSyncing: true, error: null };
+  } else {
+    statusState = { status: "loading", error: null, isSyncing: true, hasLoaded: false };
+  }
+  emitStatus();
+
+  try {
+    const res = await fetch("/api/control-room/snapshot", { cache: "no-store" });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.error || `HTTP ${res.status}`);
+    }
+    const json = await res.json();
+    if (!json.ok || !json.data) {
+      throw new Error(json.error || "Failed to load snapshot data.");
+    }
+    dbStore.set(() => json.data);
+    statusState = { status: "ready", error: null, isSyncing: false, hasLoaded: true };
+    emitStatus();
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Failed to load snapshot";
+    if (statusState.hasLoaded) {
+      statusState = { ...statusState, isSyncing: false, error: msg };
+    } else {
+      statusState = { status: "error", error: msg, isSyncing: false, hasLoaded: false };
+    }
+    emitStatus();
+  }
+}
+
+export function useDbRefresh(): () => Promise<void> {
+  return refreshDb;
+}
 
 export const useDb = (): Db => useSyncExternalStore(dbStore.subscribe, dbStore.get, dbStore.getServer);
 
-/** The signed-in staff member, or null. */
+/** The signed-in staff member, or null. Reads from StaffProvider when available. */
 export function useSession(): Staff | null {
+  const staff = useStaff();
   const s = useSyncExternalStore(sessionStore.subscribe, sessionStore.get, sessionStore.getServer);
   const db = useDb();
-  return db.staff.find((x) => x.id === s.staffId) ?? null;
+  return staff ?? db.staff.find((x) => x.id === s.staffId) ?? null;
 }
 
 const noop = () => () => {};

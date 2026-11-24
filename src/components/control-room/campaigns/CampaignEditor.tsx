@@ -40,6 +40,7 @@ function CampaignForm({ campaign, canEdit }: { campaign: Campaign; canEdit: bool
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [confirmSend, setConfirmSend] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [action, setAction] = useState<"save" | "schedule" | "send" | "delete" | "unschedule" | null>(null);
 
   const size = audienceCount(db.leads, types);
   const draft: CampaignDraft = { name: name.trim(), subject: subject.trim(), template, audience: types.join(","), audienceSize: size, body };
@@ -74,30 +75,64 @@ function CampaignForm({ campaign, canEdit }: { campaign: Campaign; canEdit: bool
   };
 
   const saveDraft = async () => {
+    if (action) return;
     if (name.trim().length < 3) return setErrors({ name: "Give the campaign a name." });
     setErrors({});
-    await campaignsApi.save(campaign.id, draft);
-    toast("Draft saved.");
+    setAction("save");
+    try {
+      await campaignsApi.save(campaign.id, draft);
+      toast("Draft saved.");
+    } finally {
+      setAction(null);
+    }
   };
   const schedule = async () => {
+    if (action) return;
     const v = validate();
     if (!v.ok || !v.iso) return;
-    await campaignsApi.schedule(campaign.id, draft, v.iso);
-    toast("Campaign scheduled.");
+    setAction("schedule");
+    try {
+      await campaignsApi.schedule(campaign.id, draft, v.iso);
+      toast("Campaign scheduled.");
+    } finally {
+      setAction(null);
+    }
   };
   const askSend = () => {
+    if (action) return;
     if (validate().ok) setConfirmSend(true);
   };
   const send = async () => {
-    setConfirmSend(false);
-    await campaignsApi.sendNow(campaign.id, draft);
-    toast(`Sent to ${plural(size, "person", "people")}.`);
+    if (action) return;
+    setAction("send");
+    try {
+      await campaignsApi.sendNow(campaign.id, draft);
+      setConfirmSend(false);
+      toast(`Sent to ${plural(size, "person", "people")}.`);
+    } finally {
+      setAction(null);
+    }
   };
   const remove = async () => {
-    setConfirmDelete(false);
-    await campaignsApi.remove(campaign.id);
-    toast("Campaign deleted.");
-    router.push("/control-room/campaigns");
+    if (action) return;
+    setAction("delete");
+    try {
+      await campaignsApi.remove(campaign.id);
+      setConfirmDelete(false);
+      toast("Campaign deleted.");
+      router.push("/control-room/campaigns");
+    } finally {
+      setAction(null);
+    }
+  };
+  const unschedule = async () => {
+    if (action) return;
+    setAction("unschedule");
+    try {
+      await campaignsApi.unschedule(campaign.id);
+    } finally {
+      setAction(null);
+    }
   };
 
   const preview = (
@@ -166,10 +201,10 @@ function CampaignForm({ campaign, canEdit }: { campaign: Campaign; canEdit: bool
             )}
           </fieldset>
           <div className="flex flex-wrap items-center gap-2 border-t border-line pt-4">
-            {mode === "later" ? <button type="button" className={btn("brand")} onClick={schedule}>{campaign.status === "scheduled" ? "Update schedule" : "Schedule campaign"}</button> : <button type="button" className={btn("brand")} onClick={askSend}>Send now</button>}
-            <button type="button" className={btn("outline")} onClick={saveDraft}>Save draft</button>
-            {campaign.status === "scheduled" && <button type="button" className={btn("ghost")} onClick={() => void campaignsApi.unschedule(campaign.id)}>Move back to draft</button>}
-            <button type="button" className={btn("ghost", "md", "ml-auto !text-danger")} onClick={() => setConfirmDelete(true)}><Icon name="trash" size={18} /> <span className="ml-1.5">Delete</span></button>
+            {mode === "later" ? <button type="button" className={btn("brand")} onClick={schedule} disabled={action !== null} aria-busy={action === "schedule"}>{action === "schedule" ? "Scheduling…" : campaign.status === "scheduled" ? "Update schedule" : "Schedule campaign"}</button> : <button type="button" className={btn("brand")} onClick={askSend} disabled={action !== null} aria-busy={action === "send"}>{action === "send" ? "Sending…" : "Send now"}</button>}
+            <button type="button" className={btn("outline")} onClick={saveDraft} disabled={action !== null} aria-busy={action === "save"}>{action === "save" ? "Saving…" : "Save draft"}</button>
+            {campaign.status === "scheduled" && <button type="button" className={btn("ghost")} onClick={unschedule} disabled={action !== null} aria-busy={action === "unschedule"}>{action === "unschedule" ? "Moving to draft…" : "Move back to draft"}</button>}
+            <button type="button" className={btn("ghost", "md", "ml-auto !text-danger")} onClick={() => setConfirmDelete(true)} disabled={action !== null} aria-busy={action === "delete"}><Icon name="trash" size={18} /> <span className="ml-1.5">{action === "delete" ? "Deleting…" : "Delete"}</span></button>
           </div>
         </form>
       </Card>

@@ -4,9 +4,9 @@ import { useState } from "react";
 import { OpenButton } from "@/components/shared/OpenButton";
 import { SceneSection } from "@/components/shared/SceneSection";
 import { copy } from "@/data/copy";
-import { services } from "@/data/services";
 import { useSceneOnView } from "@/hooks/useSceneOnView";
 import { useScene } from "@/providers/SceneProvider";
+import { useSiteContent } from "@/providers/SiteContentProvider";
 import type { Service } from "@/types/content";
 import s from "./Services.module.css";
 
@@ -36,6 +36,7 @@ function ServiceCard({ service, index, active, onActive }: { service: Service; i
 
 export default function Services() {
   const [active, setActive] = useState(-1);
+  const { services } = useSiteContent();
   return (
     <SceneSection scene="cv" id="services" className="section">
       <div className="wrap">

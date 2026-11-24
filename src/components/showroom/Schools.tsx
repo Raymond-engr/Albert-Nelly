@@ -1,7 +1,10 @@
+"use client";
+
 import { OpenButton } from "@/components/shared/OpenButton";
 import { SceneSection } from "@/components/shared/SceneSection";
 import { copy } from "@/data/copy";
-import { AI_FEATURE, packages, runningCosts } from "@/data/packages";
+import { AI_FEATURE } from "@/data/packages";
+import { useSiteContent } from "@/providers/SiteContentProvider";
 import RunningCosts from "./RunningCosts";
 import s from "./Schools.module.css";
 
@@ -13,6 +16,7 @@ const Feature = ({ text }: { text: string }) =>
   );
 
 export default function Schools() {
+  const { packages, runningCosts } = useSiteContent();
   return (
     <SceneSection scene="sch" id="schools" className="section">
       <div className="wrap">

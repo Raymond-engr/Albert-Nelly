@@ -19,29 +19,44 @@ const Row = ({ label, children }: { label: string; children: ReactNode }) => (
   <div className="flex justify-between gap-4 py-2 text-[15px]"><dt className="text-ink/70">{label}</dt><dd className="m-0 text-right font-medium">{children}</dd></div>
 );
 
-function LeadForm({ lead, onConvert }: { lead: Lead; onConvert: () => void }) {
+function LeadForm({ lead, onConvert, onPromoteReferrer }: { lead: Lead; onConvert: () => void; onPromoteReferrer: () => void }) {
   const db = useDb();
   const staff = useSession();
   const [status, setStatus] = useState<LeadStatus>(lead.status);
   const [ownerId, setOwnerId] = useState(lead.ownerId ?? "");
   const [tags, setTags] = useState(lead.tags.join(", "));
   const [notes, setNotes] = useState(lead.notes);
+  const [pending, setPending] = useState<"save" | "archive" | null>(null);
   if (!staff) return null;
 
   const canEdit = can(staff.role, "leads", "edit");
   const canDeal = can(staff.role, "deals", "edit") && lead.type === "hire" && !lead.dealId;
+  const canPromote = can(staff.role, "referrers", "edit") && lead.type === "refer";
   const parsedTags = tags.split(",").map((t) => t.trim()).filter(Boolean);
   const dirty = status !== lead.status || ownerId !== (lead.ownerId ?? "") || notes !== lead.notes || parsedTags.join("|") !== lead.tags.join("|");
   const interest = [lead.context, lead.service].filter((x, i, a) => x && a.indexOf(x) === i).join(", ");
 
   const save = async () => {
-    await leadsApi.update(lead.id, { status, ownerId: ownerId || null, notes, tags: parsedTags });
-    toast("Lead saved.");
+    if (pending) return;
+    setPending("save");
+    try {
+      await leadsApi.update(lead.id, { status, ownerId: ownerId || null, notes, tags: parsedTags });
+      toast("Lead saved.");
+    } finally {
+      setPending(null);
+    }
   };
   const toggleArchive = async () => {
+    if (pending) return;
     const next: LeadStatus = lead.status === "archived" ? "new" : "archived";
-    await leadsApi.update(lead.id, { status: next });
-    toast(next === "archived" ? "Lead archived." : "Lead restored.");
+    setPending("archive");
+    try {
+      await leadsApi.update(lead.id, { status: next });
+      setStatus(next);
+      toast(next === "archived" ? "Lead archived." : "Lead restored.");
+    } finally {
+      setPending(null);
+    }
   };
 
   return (
@@ -99,11 +114,67 @@ function LeadForm({ lead, onConvert }: { lead: Lead; onConvert: () => void }) {
       {lead.type !== "hire" && <div className="text-sm text-ink/70">This is a {lead.type === "refer" ? "referrer" : lead.type === "partner" ? "partner" : "newsletter"} lead, not a client. {lead.type === "refer" && <Link href="/control-room/referrers">Open Referrers</Link>}{lead.type === "partner" && <Link href="/control-room/partners">Open Partners</Link>}</div>}
 
       <div className="flex flex-wrap gap-2 border-t border-line pt-4">
-        {canEdit && <button type="button" className={btn("brand")} disabled={!dirty} onClick={save}>Save changes</button>}
-        {canDeal && <button type="button" className={btn("dark")} onClick={onConvert}>Turn into a deal</button>}
-        {canEdit && !lead.dealId && <button type="button" className={btn("ghost")} onClick={toggleArchive}>{lead.status === "archived" ? "Restore" : "Archive"}</button>}
+        {canEdit && <button type="button" className={btn("brand")} disabled={!dirty || !!pending} aria-busy={pending === "save"} onClick={save}>{pending === "save" ? "Saving…" : "Save changes"}</button>}
+        {canDeal && <button type="button" className={btn("dark")} disabled={!!pending} onClick={onConvert}>Turn into a deal</button>}
+        {canPromote && <button type="button" className={btn("brand")} disabled={!!pending} onClick={onPromoteReferrer}>Turn into a referrer</button>}
+        {canEdit && !lead.dealId && <button type="button" className={btn("ghost")} disabled={!!pending} aria-busy={pending === "archive"} onClick={toggleArchive}>{pending === "archive" ? (lead.status === "archived" ? "Restoring…" : "Archiving…") : (lead.status === "archived" ? "Restore" : "Archive")}</button>}
       </div>
     </div>
+  );
+}
+
+/** Modal to promote a referrer lead to an active referrer with commission rate */
+function PromoteReferrerModal({ lead, open, onClose }: { lead: Lead | null; open: boolean; onClose: () => void }) {
+  const db = useDb();
+  const [rate, setRate] = useState(String(db.settings.commissionMin || 10));
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  if (!lead) return null;
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const pct = Number(rate);
+    if (Number.isNaN(pct) || pct < 0 || pct > 100) {
+      setError("Enter a percentage between 0 and 100.");
+      return;
+    }
+    setSaving(true);
+    setError(null);
+    try {
+      await leadsApi.convertToReferrer(lead.id, pct);
+      toast("Promoted to referrer.");
+      onClose();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to promote referrer.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Overlay open={open} onClose={onClose} variant="modal" title="Promote to referrer">
+      <form onSubmit={submit} noValidate className="flex flex-col gap-4">
+        <p className="text-sm text-ink/70">
+          This will onboard <span className="font-semibold text-ink">{lead.name}</span> as an active referrer using their email ({lead.email}) and WhatsApp number ({lead.whatsapp || "none"}).
+        </p>
+        <Field id="prom-rate" label="Agreed commission percentage" error={error || undefined} hint={`Standard range: ${db.settings.commissionMin} to ${db.settings.commissionMax} percent.`}>
+          <input
+            id="prom-rate"
+            inputMode="decimal"
+            className={inputCls}
+            value={rate}
+            onChange={(e) => setRate(e.target.value)}
+          />
+        </Field>
+        <div className="flex justify-end gap-2 pt-2">
+          <button type="button" className={btn("ghost")} onClick={onClose} disabled={saving}>Cancel</button>
+          <button type="submit" className={btn("brand")} disabled={saving}>
+            {saving ? "Promoting..." : "Confirm and onboard"}
+          </button>
+        </div>
+      </form>
+    </Overlay>
   );
 }
 
@@ -111,13 +182,22 @@ function LeadForm({ lead, onConvert }: { lead: Lead; onConvert: () => void }) {
 export function LeadDrawer({ leadId, onClose }: { leadId: string | null; onClose: () => void }) {
   const db = useDb();
   const [converting, setConverting] = useState(false);
+  const [promoting, setPromoting] = useState(false);
   const lead = leadId ? db.leads.find((l) => l.id === leadId) ?? null : null;
   return (
     <>
-      <Overlay open={!!lead && !converting} onClose={onClose} title={lead?.name ?? "Lead"}>
-        {lead && <LeadForm key={lead.id} lead={lead} onConvert={() => setConverting(true)} />}
+      <Overlay open={!!lead && !converting && !promoting} onClose={onClose} title={lead?.name ?? "Lead"}>
+        {lead && (
+          <LeadForm
+            key={lead.id}
+            lead={lead}
+            onConvert={() => setConverting(true)}
+            onPromoteReferrer={() => setPromoting(true)}
+          />
+        )}
       </Overlay>
       <NewDealModal open={!!lead && converting} onClose={() => setConverting(false)} lead={lead} />
+      <PromoteReferrerModal lead={lead} open={!!lead && promoting} onClose={() => setPromoting(false)} />
     </>
   );
 }

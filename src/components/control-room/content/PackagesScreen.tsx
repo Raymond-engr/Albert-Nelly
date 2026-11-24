@@ -29,9 +29,11 @@ function PackageEditor({ tier, canEdit }: { tier: PackageTier; canEdit: boolean 
   const [features, setFeatures] = useState(tier.features);
   const [more, setMore] = useState(tier.more);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState(false);
 
   const save = async (e: FormEvent) => {
     e.preventDefault();
+    if (saving) return;
     const next: Record<string, string> = {};
     if (name.trim().length < 3) next.name = "Give the package a name.";
     if (description.trim().length < 5) next.description = "Write one short line about it.";
@@ -39,8 +41,13 @@ function PackageEditor({ tier, canEdit }: { tier: PackageTier; canEdit: boolean 
     setErrors(next);
     if (Object.keys(next).length || !priceOk) return;
     const clean = (l: string[]) => l.map((x) => x.trim()).filter(Boolean);
-    await packagesApi.update(tier.id, { name: name.trim(), description: description.trim(), audience: audience.trim(), price, featured, features: clean(features), more: clean(more) });
-    toast("Package saved.");
+    setSaving(true);
+    try {
+      await packagesApi.update(tier.id, { name: name.trim(), description: description.trim(), audience: audience.trim(), price, featured, features: clean(features), more: clean(more) });
+      toast("Package saved.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -57,7 +64,7 @@ function PackageEditor({ tier, canEdit }: { tier: PackageTier; canEdit: boolean 
           </div>
           <FeatureList label="Shown on the card" hint="Aim for 4 to 6 checks." items={features} onChange={setFeatures} otherLabel="See all features" onSend={(i) => { setMore([...more, features[i]]); setFeatures(features.filter((_, k) => k !== i)); }} disabled={!canEdit} />
           <FeatureList label="Under “See all features”" items={more} onChange={setMore} otherLabel="the card" onSend={(i) => { setFeatures([...features, more[i]]); setMore(more.filter((_, k) => k !== i)); }} disabled={!canEdit} />
-          {canEdit ? <div><button type="submit" className={btn("brand")} disabled={!priceOk}>Save package</button></div> : <div className="rounded-xl bg-sun/20 p-3 text-sm">Your role can view packages but not change them.</div>}
+          {canEdit ? <div><button type="submit" className={btn("brand")} disabled={!priceOk || saving} aria-busy={saving}>{saving ? "Saving…" : "Save package"}</button></div> : <div className="rounded-xl bg-sun/20 p-3 text-sm">Your role can view packages but not change them.</div>}
         </form>
       </Card>
       <div className="xl:sticky xl:top-6 xl:self-start">
@@ -74,16 +81,23 @@ function CostsEditor({ canEdit }: { canEdit: boolean }) {
   const db = useDb();
   const [rows, setRows] = useState<CostRow[]>(db.runningCosts.map((c) => ({ id: c.id, item: c.item, amount: String(c.amount) })));
   const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
 
   const total = rows.reduce((n, r) => n + (parseNaira(r.amount) ?? 0), 0);
   const edit = (id: string, patch: Partial<CostRow>) => setRows(rows.map((r) => (r.id === id ? { ...r, ...patch } : r)));
   const save = async (e: FormEvent) => {
     e.preventDefault();
+    if (saving) return;
     if (rows.some((r) => r.item.trim().length < 2)) return setError("Every row needs a name, for example Hosting.");
     if (rows.some((r) => parseNaira(r.amount) === null)) return setError("Amounts must be numbers, for example 60000.");
     setError("");
-    await costsApi.save(rows.map((r) => ({ id: r.id, item: r.item.trim(), amount: parseNaira(r.amount) ?? 0 })));
-    toast("Running costs saved.");
+    setSaving(true);
+    try {
+      await costsApi.save(rows.map((r) => ({ id: r.id, item: r.item.trim(), amount: parseNaira(r.amount) ?? 0 })));
+      toast("Running costs saved.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -102,7 +116,7 @@ function CostsEditor({ canEdit }: { canEdit: boolean }) {
         {canEdit ? (
           <div className="flex flex-wrap gap-2">
             <button type="button" className={btn("outline")} onClick={() => setRows([...rows, { id: uid("cost"), item: "", amount: "" }])}><Icon name="plus" size={18} /> <span className="ml-1.5">Add a cost</span></button>
-            <button type="submit" className={btn("brand")}>Save costs</button>
+            <button type="submit" className={btn("brand")} disabled={saving} aria-busy={saving}>{saving ? "Saving…" : "Save costs"}</button>
           </div>
         ) : <div className="rounded-xl bg-sun/20 p-3 text-sm">Your role can view the costs but not change them.</div>}
       </form>

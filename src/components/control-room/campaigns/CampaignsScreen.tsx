@@ -14,9 +14,9 @@ import { Badge, btn, Card, EmptyState, PageHeader, type Tone } from "../ui/kit";
 import { Segmented } from "../ui/Segmented";
 
 type Filter = "all" | Campaign["status"];
-const TONE: Record<Campaign["status"], Tone> = { draft: "neutral", scheduled: "sun", sent: "green", automated: "dark" };
-const LABEL: Record<Campaign["status"], string> = { draft: "Draft", scheduled: "Scheduled", sent: "Sent", automated: "Automatic" };
-const RANK: Record<Campaign["status"], number> = { scheduled: 0, draft: 1, sent: 2, automated: 3 };
+const TONE: Record<Campaign["status"], Tone> = { draft: "neutral", scheduled: "sun", sending: "sun", sent: "green", automated: "dark" };
+const LABEL: Record<Campaign["status"], string> = { draft: "Draft", scheduled: "Scheduled", sending: "Sending…", sent: "Sent", automated: "Automatic" };
+const RANK: Record<Campaign["status"], number> = { sending: 0, scheduled: 1, draft: 2, sent: 3, automated: 4 };
 const pct = (n: number, of: number) => (of ? `${Math.round((n / of) * 100)}%` : "0%");
 
 /**
@@ -28,6 +28,7 @@ export function CampaignsScreen() {
   const staff = useSession();
   const router = useRouter();
   const [filter, setFilter] = useState<Filter>("all");
+  const [creating, setCreating] = useState(false);
   if (!staff) return null;
 
   const canEdit = can(staff.role, "campaigns", "edit");
@@ -37,13 +38,19 @@ export function CampaignsScreen() {
     .sort((a, b) => RANK[a.status] - RANK[b.status] || (b.scheduledFor ?? b.sentAt ?? "").localeCompare(a.scheduledFor ?? a.sentAt ?? ""));
   const count = (s: Filter) => db.campaigns.filter((c) => s === "all" || c.status === s).length;
   const create = async () => {
-    const c = await campaignsApi.create();
-    router.push(`/control-room/campaigns/${c.id}`);
+    if (creating) return;
+    setCreating(true);
+    try {
+      const c = await campaignsApi.create();
+      router.push(`/control-room/campaigns/${c.id}`);
+    } finally {
+      setCreating(false);
+    }
   };
 
   return (
     <>
-      <PageHeader title="Campaigns" description="Emails to the people who joined through the site. WhatsApp is for one-to-one chats, not bulk sending." actions={canEdit ? <button type="button" className={btn("brand")} onClick={create}><Icon name="plus" size={18} /> <span className="ml-1.5">New campaign</span></button> : undefined} />
+      <PageHeader title="Campaigns" description="Emails to the people who joined through the site. WhatsApp is for one-to-one chats, not bulk sending." actions={canEdit ? <button type="button" className={btn("brand")} onClick={create} disabled={creating} aria-busy={creating}><Icon name="plus" size={18} /> <span className="ml-1.5">{creating ? "Creating…" : "New campaign"}</span></button> : undefined} />
       <div className="mb-4 overflow-x-auto">
         <Segmented<Filter> label="Status" value={filter} onChange={setFilter} options={[{ value: "all", label: "All", count: count("all") }, { value: "draft", label: "Drafts", count: count("draft") }, { value: "scheduled", label: "Scheduled", count: count("scheduled") }, { value: "sent", label: "Sent", count: count("sent") }, { value: "automated", label: "Automatic", count: count("automated") }]} />
       </div>
